@@ -3,24 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIFF Login</title>
+    <title>LIFF UserID 讀取器</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; text-align: center; }
-        #status { margin-top: 20px; padding: 10px; background: #eee; border-radius: 5px; }
-        .success { color: green; }
-        .error { color: red; }
+        /* 簡單美觀的樣式 */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; text-align: center; background-color: #f2f2f2; }
+        .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-top: 20px; word-break: break-all; }
+        .label { font-size: 12px; color: #888; margin-bottom: 5px; }
+        .value { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 15px; background: #eee; padding: 10px; border-radius: 5px; }
+        #status { margin-top: 20px; padding: 10px; border-radius: 5px; font-size: 14px; color: #666; }
+        .btn { background-color: #00C300; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-size: 16px; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h3>LIFF 登入 (GitHub 版)</h3>
-    <div id="status">正在初始化...</div>
+    <h3>LIFF UserID 擷取工具</h3>
+    
+    <div id="result-area" style="display:none;">
+        <div class="card">
+            <div class="label">您的 UserID</div>
+            <div class="value" id="disp-userid">讀取中...</div>
+            
+            <div class="label">您的暱稱 (Display Name)</div>
+            <div class="value" id="disp-name">讀取中...</div>
+            
+            <button class="btn" onclick="liff.closeWindow()">關閉視窗</button>
+        </div>
+    </div>
+
+    <div id="status">正在初始化 LIFF...</div>
 
     <script>
-        // 【設定區】請修改這裡
+        // 【設定區】請確認這裡填寫正確
         const MY_LIFF_ID = '2008965576-txfwY86y';
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec'; 
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
 
+        // 網頁載入後執行
         window.onload = function() {
             initializeLiff();
         };
@@ -29,49 +46,56 @@
             liff.init({ liffId: MY_LIFF_ID })
                 .then(() => {
                     if (!liff.isLoggedIn()) {
-                        liff.login();
+                        liff.login(); // 沒登入就叫他登入
                     } else {
-                        sendDataToGAS();
+                        // 已登入，開始抓資料
+                        getAndShowProfile();
                     }
                 })
                 .catch((err) => {
                     document.getElementById('status').innerText = '初始化失敗: ' + err;
+                    document.getElementById('status').style.color = 'red';
                 });
         }
 
-        function sendDataToGAS() {
+        function getAndShowProfile() {
             liff.getProfile().then(profile => {
-                document.getElementById('status').innerText = '已取得 UserID，正在傳送...';
-                
-                // 【修改】將資料拼接到網址後面 (Query String)
-                // 使用 encodeURIComponent 確保中文或特殊符號不會爛掉
-                const queryString = "?userId=" + encodeURIComponent(profile.userId) + 
-                                  "&displayName=" + encodeURIComponent(profile.displayName);
-                
-                const finalUrl = GAS_URL + queryString;
+                // 1. 【顯示資料】直接顯示在網頁上，這就是您要的 ID！
+                document.getElementById('result-area').style.display = 'block';
+                document.getElementById('disp-userid').innerText = profile.userId;
+                document.getElementById('disp-name').innerText = profile.displayName;
+                document.getElementById('status').innerText = '讀取成功！正在傳送至後端...';
 
-                // 【修改】改用 GET 請求
-                fetch(finalUrl, {
-                    method: 'GET',
-                    // 不需要 headers 和 body
-                })
-                .then(response => response.json()) // 解析 JSON
-                .then(data => {
-                    if(data.status === 'success') {
-                        document.getElementById('status').innerHTML = 
-                            '<span class="success">✅ 成功！' + data.message + '</span>';
-                    } else {
-                        throw new Error(data.message);
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('status').innerHTML = 
-                        '<span class="error">❌ 失敗: ' + error + '</span><br><small>請檢查 GAS 是否已部署為新版本</small>';
-                });
+                // 2. 傳送給後端 (GAS)
+                sendDataToGAS(profile.userId, profile.displayName);
+            }).catch(err => {
+                document.getElementById('status').innerText = '讀取 Profile 失敗: ' + err;
+                document.getElementById('status').style.color = 'red';
+            });
+        }
+
+        function sendDataToGAS(userId, displayName) {
+            // 拼湊網址參數
+            const queryString = "?userId=" + encodeURIComponent(userId) + 
+                              "&displayName=" + encodeURIComponent(displayName);
+            const finalUrl = GAS_URL + queryString;
+
+            // 【關鍵修改】使用 mode: 'no-cors'
+            // 這會告訴瀏覽器：「我要送資料，就算跨域也不要報錯」，專門解決 iOS 問題
+            fetch(finalUrl, {
+                method: 'GET',
+                mode: 'no-cors' 
+            })
+            .then(() => {
+                // 因為是 no-cors，我們收不到後端回傳的文字，但只要沒報錯就是送出了
+                document.getElementById('status').innerText = '✅ 資料已成功送出！(後端處理中)';
+                document.getElementById('status').style.color = 'green';
+            })
+            .catch(error => {
+                document.getElementById('status').innerText = '❌ 傳送失敗: ' + error;
+                document.getElementById('status').style.color = 'red';
             });
         }
     </script>
 </body>
-
 </html>
-
