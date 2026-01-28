@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIFF Login</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        #status { margin-top: 20px; padding: 10px; background: #eee; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h3>LIFF 登入 (GitHub 版)</h3>
+    <div id="status">正在初始化...</div>
+
+    <script>
+        // 【設定區】請修改這裡
+        const MY_LIFF_ID = '2008965576-txfwY86y';
+        const GAS_URL = '請貼上剛剛複製的 GAS Web App URL'; 
+
+        window.onload = function() {
+            initializeLiff();
+        };
+
+        function initializeLiff() {
+            liff.init({ liffId: MY_LIFF_ID })
+                .then(() => {
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                    } else {
+                        sendDataToGAS();
+                    }
+                })
+                .catch((err) => {
+                    document.getElementById('status').innerText = '初始化失敗: ' + err;
+                });
+        }
+
+        function sendDataToGAS() {
+            liff.getProfile().then(profile => {
+                document.getElementById('status').innerText = '已取得 UserID，正在傳送...';
+                
+                // 準備要傳送的資料
+                const postData = {
+                    userId: profile.userId,
+                    displayName: profile.displayName
+                };
+
+                // 使用 fetch 傳送給 GAS
+                // 關鍵：method 用 POST，body 轉成字串
+                fetch(GAS_URL, {
+                    method: 'POST',
+                    // 使用 text/plain 避免觸發 CORS 預檢 (Preflight) 錯誤
+                    headers: { "Content-Type": "text/plain" }, 
+                    body: JSON.stringify(postData)
+                })
+                .then(response => response.json()) // 解析 GAS 回傳的 JSON
+                .then(data => {
+                    document.getElementById('status').innerHTML = 
+                        '<span class="success">成功！' + data.message + '</span>';
+                })
+                .catch(error => {
+                    document.getElementById('status').innerHTML = 
+                        '<span class="error">傳送失敗: ' + error + '</span>';
+                });
+            });
+        }
+    </script>
+</body>
+</html>
