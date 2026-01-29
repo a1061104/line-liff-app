@@ -3,305 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>會員資料維護</title>
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <title>排骨酥寵物美容管理系統</title>
     <style>
-        /* CSS 樣式區 */
-        body { font-family: -apple-system, sans-serif; background-color: #f5f5f5; padding: 20px; }
-        .container { background: white; max-width: 500px; margin: 0 auto; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h3 { text-align: center; color: #333; margin-bottom: 20px; }
-        
-        .form-group { margin-bottom: 15px; text-align: left; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        
-        /* 統一輸入框樣式 */
-        .form-control, .form-select { 
-            width: 100%; 
-            padding: 10px; 
-            border: 1px solid #ddd; 
-            border-radius: 5px; 
-            box-sizing: border-box; 
-            font-size: 16px;
-            background-color: #fff;
-            -webkit-appearance: none;
-            appearance: none;
-            min-height: 44px;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
         }
 
-        /* 讓下拉選單有箭頭 */
-        .form-select {
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat;
-            background-position: right .7em top 50%;
-            background-size: .65em auto;
+        h2 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
         }
-        
-        /* 地址區塊的排版 */
-        .address-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        .address-row select { width: 50%; }
 
-        input[type="date"].form-control { line-height: 1.4; display: block; }
-        .form-control:focus, .form-select:focus { border-color: #06c755; outline: none; }
-        textarea.form-control { resize: vertical; height: 80px; }
+        .menu-container {
+            width: 100%;
+            max-width: 400px;
+            display: grid;
+            gap: 20px;
+        }
 
-        .btn { width: 100%; padding: 12px; background-color: #06c755; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; font-weight: bold; }
-        .btn:disabled { background-color: #ccc; }
-        
-        #loading { text-align: center; margin-top: 50px; font-size: 18px; color: #666; }
-        #form-area { display: none; }
+        .menu-btn {
+            background-color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 25px 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            text-decoration: none; /* 移除連結下底線 */
+            color: #333;
+        }
+
+        .menu-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .icon {
+            font-size: 40px;
+            margin-right: 20px;
+            width: 50px;
+            text-align: center;
+        }
+
+        .text-content {
+            text-align: left;
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .desc {
+            font-size: 14px;
+            color: #888;
+        }
+
+        /* 顏色裝飾 */
+        .btn-customer { border-left: 5px solid #06c755; }
+        .btn-pet { border-left: 5px solid #ff9f43; }
+
+        footer {
+            margin-top: auto;
+            color: #aaa;
+            font-size: 12px;
+            padding-top: 20px;
+        }
     </style>
 </head>
 <body>
 
-    <div id="loading">正在讀取會員資料...</div>
+    <h2>🐶 排骨酥寵物美容<br>管理系統</h2>
 
-    <div id="form-area" class="container">
-        <h3>會員資料維護</h3>
+    <div class="menu-container">
         
-        <div class="form-group">
-            <label>客戶名稱</label>
-            <input type="text" id="u_name" class="form-control" placeholder="請輸入姓名">
-        </div>
-
-        <div class="form-group">
-            <label>電話</label>
-            <input type="tel" id="u_phone" class="form-control" placeholder="09xx-xxx-xxx">
-        </div>
-
-        <div class="form-group">
-            <label>地址</label>
-            <div class="address-row">
-                <select id="addr_city" class="form-select" onchange="updateDistricts()">
-                    <option value="">請選擇縣市</option>
-                </select>
-                <select id="addr_dist" class="form-select">
-                    <option value="">請選擇區域</option>
-                </select>
+        <a href="Customer.html" class="menu-btn btn-customer">
+            <div class="icon">🙍‍♂️</div>
+            <div class="text-content">
+                <span class="title">客戶資料維護</span>
+                <span class="desc">新增、查詢或修改會員資料</span>
             </div>
-            <input type="text" id="addr_detail" class="form-control" placeholder="請輸入街道巷弄號樓...">
-        </div>
+        </a>
 
-        <div class="form-group">
-            <label>生日</label>
-            <input type="date" id="u_birthday" class="form-control">
-        </div>
+        <a href="Pet.html" class="menu-btn btn-pet">
+            <div class="icon">🐕</div>
+            <div class="text-content">
+                <span class="title">寵物資料建檔</span>
+                <span class="desc">建立寵物病歷與注意事項</span>
+            </div>
+        </a>
 
-        <div class="form-group">
-            <label>備註</label>
-            <textarea id="u_memo" class="form-control" placeholder="備註事項..."></textarea>
-        </div>
-
-        <button id="btn-save" class="btn" onclick="saveData()">存檔</button>
     </div>
 
-    <script>
-        // 【設定區】
-        const MY_LIFF_ID = '2008965576-txfwY86y';
-        // 請確認這是您最新的 GAS 網址 (無需修改後端)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
+    <footer>&copy; 2026 排骨酥寵物美容</footer>
 
-        let currentUserId = '';
-
-        // 台灣縣市區域資料庫
-        const taiwanData = {
-            "基隆市": ["仁愛區", "信義區", "中正區", "中山區", "安樂區", "暖暖區", "七堵區"],
-            "台北市": ["中正區", "大同區", "中山區", "松山區", "大安區", "萬華區", "信義區", "士林區", "北投區", "內湖區", "南港區", "文山區"],
-            "新北市": ["萬里區", "金山區", "板橋區", "汐止區", "深坑區", "石碇區", "瑞芳區", "平溪區", "雙溪區", "貢寮區", "新店區", "坪林區", "烏來區", "永和區", "中和區", "土城區", "三峽區", "樹林區", "鶯歌區", "三重區", "新莊區", "泰山區", "林口區", "蘆洲區", "五股區", "八里區", "淡水區", "三芝區", "石門區"],
-            "桃園市": ["中壢區", "平鎮區", "龍潭區", "楊梅區", "新屋區", "觀音區", "桃園區", "龜山區", "八德區", "大溪區", "復興區", "大園區", "蘆竹區"],
-            "新竹市": ["東區", "北區", "香山區"],
-            "新竹縣": ["竹北市", "湖口鄉", "新豐鄉", "新埔鎮", "關西鎮", "芎林鄉", "寶山鄉", "竹東鎮", "五峰鄉", "橫山鄉", "尖石鄉", "北埔鄉", "峨眉鄉"],
-            "苗栗縣": ["竹南鎮", "頭份市", "三灣鄉", "南庄鄉", "獅潭鄉", "後龍鎮", "通霄鎮", "苑裡鎮", "苗栗市", "造橋鄉", "頭屋鄉", "公館鄉", "大湖鄉", "泰安鄉", "銅鑼鄉", "三義鄉", "西湖鄉", "卓蘭鎮"],
-            "台中市": ["中區", "東區", "南區", "西區", "北區", "北屯區", "西屯區", "南屯區", "太平區", "大里區", "霧峰區", "烏日區", "豐原區", "后里區", "石岡區", "東勢區", "和平區", "新社區", "潭子區", "大雅區", "神岡區", "大肚區", "沙鹿區", "龍井區", "梧棲區", "清水區", "大甲區", "外埔區", "大安區"],
-            "彰化縣": ["彰化市", "芬園鄉", "花壇鄉", "秀水鄉", "鹿港鎮", "福興鄉", "線西鄉", "和美鎮", "伸港鄉", "員林市", "社頭鄉", "永靖鄉", "埔心鄉", "溪湖鎮", "大村鄉", "埔鹽鄉", "田中鎮", "北斗鎮", "田尾鄉", "埤頭鄉", "溪州鄉", "竹塘鄉", "二林鎮", "大城鄉", "芳苑鄉", "二水鄉"],
-            "南投縣": ["南投市", "中寮鄉", "草屯鎮", "國姓鄉", "埔里鎮", "仁愛鄉", "名間鄉", "集集鎮", "水里鄉", "魚池鄉", "信義鄉", "竹山鎮", "鹿谷鄉"],
-            "雲林縣": ["斗南鎮", "大埤鄉", "虎尾鎮", "土庫鎮", "褒忠鄉", "東勢鄉", "台西鄉", "崙背鄉", "麥寮鄉", "斗六市", "林內鄉", "古坑鄉", "莿桐鄉", "西螺鎮", "二崙鄉", "北港鎮", "水林鄉", "口湖鄉", "四湖鄉", "元長鄉"],
-            "嘉義市": ["東區", "西區"],
-            "嘉義縣": ["番路鄉", "梅山鄉", "竹崎鄉", "阿里山鄉", "中埔鄉", "大埔鄉", "水上鄉", "鹿草鄉", "太保市", "朴子市", "東石鄉", "六腳鄉", "新港鄉", "民雄鄉", "大林鎮", "溪口鄉", "義竹鄉", "布袋鎮"],
-            "台南市": ["中西區", "東區", "南區", "北區", "安平區", "安南區", "永康區", "歸仁區", "新化區", "左鎮區", "玉井區", "楠西區", "南化區", "仁德區", "關廟區", "龍崎區", "官田區", "麻豆區", "佳里區", "西港區", "七股區", "將軍區", "學甲區", "北門區", "新營區", "後壁區", "白河區", "東山區", "六甲區", "下營區", "柳營區", "鹽水區", "善化區", "大內區", "山上區", "新市區", "安定區"],
-            "高雄市": ["新興區", "前金區", "苓雅區", "鹽埕區", "鼓山區", "旗津區", "前鎮區", "三民區", "楠梓區", "小港區", "左營區", "仁武區", "大社區", "東沙群島", "南沙群島", "岡山區", "路竹區", "阿蓮區", "田寮區", "燕巢區", "橋頭區", "梓官區", "彌陀區", "永安區", "湖內區", "鳳山區", "大寮區", "林園區", "鳥松區", "大樹區", "旗山區", "美濃區", "六龜區", "內門區", "杉林區", "甲仙區", "桃源區", "那瑪夏區", "茂林區", "茄萣區"],
-            "屏東縣": ["屏東市", "三地門鄉", "霧台鄉", "瑪家鄉", "九如鄉", "里港鄉", "高樹鄉", "鹽埔鄉", "長治鄉", "麟洛鄉", "竹田鄉", "內埔鄉", "萬丹鄉", "潮州鎮", "泰武鄉", "來義鄉", "萬巒鄉", "崁頂鄉", "新埤鄉", "南州鄉", "林邊鄉", "東港鎮", "琉球鄉", "佳冬鄉", "新園鄉", "枋寮鄉", "枋山鄉", "春日鄉", "獅子鄉", "車城鄉", "牡丹鄉", "恆春鎮", "滿州鄉"],
-            "宜蘭縣": ["宜蘭市", "頭城鎮", "礁溪鄉", "壯圍鄉", "員山鄉", "羅東鎮", "三星鄉", "大同鄉", "五結鄉", "冬山鄉", "蘇澳鎮", "南澳鄉"],
-            "花蓮縣": ["花蓮市", "新城鄉", "秀林鄉", "吉安鄉", "壽豐鄉", "鳳林鎮", "光復鄉", "豐濱鄉", "瑞穗鄉", "萬榮鄉", "玉里鎮", "卓溪鄉", "富里鄉"],
-            "台東縣": ["台東市", "綠島鄉", "蘭嶼鄉", "延平鄉", "卑南鄉", "鹿野鄉", "關山鎮", "海端鄉", "池上鄉", "東河鄉", "成功鎮", "長濱鄉", "太麻里鄉", "金峰鄉", "大武鄉", "達仁鄉"],
-            "澎湖縣": ["馬公市", "西嶼鄉", "望安鄉", "七美鄉", "白沙鄉", "湖西鄉"],
-            "金門縣": ["金沙鎮", "金湖鎮", "金寧鄉", "金城鎮", "烈嶼鄉", "烏坵鄉"],
-            "連江縣": ["南竿鄉", "北竿鄉", "莒光鄉", "東引鄉"]
-        };
-
-        window.onload = function() {
-            initCitySelect(); // 初始化下拉選單
-            initializeLiff();
-        };
-
-        // 初始化縣市選單
-        function initCitySelect() {
-            const citySelect = document.getElementById("addr_city");
-            for (let city in taiwanData) {
-                let option = document.createElement("option");
-                option.value = city;
-                option.text = city;
-                citySelect.appendChild(option);
-            }
-        }
-
-        // 當縣市改變時，更新區域選單
-        function updateDistricts() {
-            const citySelect = document.getElementById("addr_city");
-            const distSelect = document.getElementById("addr_dist");
-            const city = citySelect.value;
-            
-            // 清空舊選項
-            distSelect.innerHTML = '<option value="">請選擇區域</option>';
-
-            if (city && taiwanData[city]) {
-                const dists = taiwanData[city];
-                for (let dist of dists) {
-                    let option = document.createElement("option");
-                    option.value = dist;
-                    option.text = dist;
-                    distSelect.appendChild(option);
-                }
-            }
-        }
-
-        function initializeLiff() {
-            liff.init({ liffId: MY_LIFF_ID })
-                .then(() => {
-                    if (!liff.isLoggedIn()) {
-                        liff.login();
-                    } else {
-                        liff.getProfile().then(profile => {
-                            currentUserId = profile.userId;
-                            let displayName = profile.displayName;
-                            checkUserStatus(currentUserId, displayName);
-                        });
-                    }
-                })
-                .catch((err) => {
-                    alert('LIFF 初始化失敗: ' + err);
-                });
-        }
-
-        function checkUserStatus(userId, defaultName) {
-            const url = GAS_URL + '?action=query&u_id=' + userId;
-
-            fetch(url)
-            .then(res => res.json())
-            .then(result => {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('form-area').style.display = 'block';
-
-                if (result.status === 'exist') {
-                    let data = result.data;
-                    document.getElementById('u_name').value = data.name;
-                    document.getElementById('u_phone').value = data.phone;
-                    document.getElementById('u_birthday').value = data.birthday;
-                    document.getElementById('u_memo').value = data.memo;
-                    
-                    // 【關鍵】解析地址並回填到下拉選單
-                    parseAndSetAddress(data.addr);
-                } else {
-                    document.getElementById('u_name').value = defaultName;
-                }
-            })
-            .catch(err => {
-                document.getElementById('loading').innerText = '讀取失敗';
-                alert('連線錯誤: ' + err); 
-            });
-        }
-
-        // 解析地址字串 (例如: "台北市內湖區瑞光路...") 回填到選單
-        function parseAndSetAddress(fullAddr) {
-            if (!fullAddr) return;
-
-            // 1. 嘗試找出縣市
-            const citySelect = document.getElementById("addr_city");
-            let matchedCity = "";
-            for (let city in taiwanData) {
-                if (fullAddr.startsWith(city)) {
-                    matchedCity = city;
-                    break;
-                }
-            }
-
-            if (matchedCity) {
-                citySelect.value = matchedCity;
-                updateDistricts(); // 更新區域選單
-
-                // 2. 嘗試找出區域
-                const distSelect = document.getElementById("addr_dist");
-                let matchedDist = "";
-                let remainingAddr = fullAddr.substring(matchedCity.length); // 去掉縣市
-
-                const dists = taiwanData[matchedCity];
-                for (let dist of dists) {
-                    if (remainingAddr.startsWith(dist)) {
-                        matchedDist = dist;
-                        break;
-                    }
-                }
-
-                if (matchedDist) {
-                    distSelect.value = matchedDist;
-                    // 3. 剩下的就是詳細地址
-                    document.getElementById("addr_detail").value = remainingAddr.substring(matchedDist.length);
-                } else {
-                    // 沒找到區域，剩下的全部填入詳細地址
-                    document.getElementById("addr_detail").value = remainingAddr;
-                }
-            } else {
-                // 連縣市都沒對到，直接全部填入詳細地址
-                document.getElementById("addr_detail").value = fullAddr;
-            }
-        }
-
-        function saveData() {
-            const btn = document.getElementById('btn-save');
-            
-            const name = document.getElementById('u_name').value;
-            const phone = document.getElementById('u_phone').value;
-            const birthday = document.getElementById('u_birthday').value;
-            const memo = document.getElementById('u_memo').value;
-
-            // 【關鍵】組合地址
-            const city = document.getElementById("addr_city").value;
-            const dist = document.getElementById("addr_dist").value;
-            const detail = document.getElementById("addr_detail").value;
-            const fullAddr = city + dist + detail; // 拼成完整字串
-
-            if(!name) { alert('請輸入名稱'); return; }
-
-            btn.disabled = true;
-            btn.innerText = '儲存中...';
-
-            const params = `?action=save` +
-                           `&u_id=${encodeURIComponent(currentUserId)}` +
-                           `&name=${encodeURIComponent(name)}` +
-                           `&phone=${encodeURIComponent(phone)}` +
-                           `&addr=${encodeURIComponent(fullAddr)}` + // 傳送完整地址
-                           `&birthday=${encodeURIComponent(birthday)}` +
-                           `&memo=${encodeURIComponent(memo)}`;
-
-            const url = GAS_URL + params;
-
-            fetch(url)
-            .then(res => res.json())
-            .then(result => {
-                if (result.status === 'success') {
-                    alert(result.message);
-                    liff.closeWindow();
-                } else {
-                    alert('存檔失敗: ' + result.message);
-                    btn.disabled = false;
-                    btn.innerText = '存檔';
-                }
-            })
-            .catch(err => {
-                alert('存檔發生錯誤: ' + err);
-                btn.disabled = false;
-                btn.innerText = '存檔';
-            });
-        }
-    </script>
 </body>
 </html>
