@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>排骨酥寵物美容管理系統</title>
     <style>
+        /* 整體版面設定 */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: #f5f5f5;
@@ -13,14 +14,17 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            margin: 0;
         }
 
         h2 {
             color: #333;
             margin-bottom: 30px;
             text-align: center;
+            line-height: 1.4;
         }
 
+        /* 選單容器 */
         .menu-container {
             width: 100%;
             max-width: 400px;
@@ -28,6 +32,7 @@
             gap: 20px;
         }
 
+        /* 按鈕樣式 */
         .menu-btn {
             background-color: white;
             border: none;
@@ -39,22 +44,28 @@
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            text-decoration: none; /* 移除連結下底線 */
+            text-decoration: none; /* 移除超連結底線 */
             color: #333;
+            position: relative;
+            overflow: hidden;
         }
 
+        /* 按下效果 */
         .menu-btn:active {
             transform: scale(0.98);
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
+        /* 圖示區域 */
         .icon {
             font-size: 40px;
             margin-right: 20px;
             width: 50px;
             text-align: center;
+            flex-shrink: 0;
         }
 
+        /* 文字區域 */
         .text-content {
             text-align: left;
         }
@@ -71,15 +82,17 @@
             color: #888;
         }
 
-        /* 顏色裝飾 */
-        .btn-customer { border-left: 5px solid #06c755; }
-        .btn-pet { border-left: 5px solid #ff9f43; }
+        /* 個別按鈕顏色條裝飾 */
+        .btn-customer { border-left: 6px solid #06c755; }
+        .btn-pet { border-left: 6px solid #ff9f43; }
 
+        /* 頁尾 */
         footer {
             margin-top: auto;
             color: #aaa;
             font-size: 12px;
             padding-top: 20px;
+            text-align: center;
         }
     </style>
 </head>
