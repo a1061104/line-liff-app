@@ -3,41 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIFF UserID 讀取器</title>
+    <title>會員資料維護</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        /* 簡單美觀的樣式 */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; text-align: center; background-color: #f2f2f2; }
-        .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-top: 20px; word-break: break-all; }
-        .label { font-size: 12px; color: #888; margin-bottom: 5px; }
-        .value { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 15px; background: #eee; padding: 10px; border-radius: 5px; }
-        #status { margin-top: 20px; padding: 10px; border-radius: 5px; font-size: 14px; color: #666; }
-        .btn { background-color: #00C300; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-size: 16px; margin-top: 10px; cursor: pointer; }
+        /* CSS 樣式區 */
+        body { font-family: -apple-system, sans-serif; background-color: #f5f5f5; padding: 20px; }
+        .container { background: white; max-width: 500px; margin: 0 auto; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h3 { text-align: center; color: #333; margin-bottom: 20px; }
+        
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+        .form-control:focus { border-color: #06c755; outline: none; }
+        textarea.form-control { resize: vertical; height: 80px; }
+
+        .btn { width: 100%; padding: 12px; background-color: #06c755; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; font-weight: bold; }
+        .btn:disabled { background-color: #ccc; }
+        
+        #loading { text-align: center; margin-top: 50px; font-size: 18px; color: #666; }
+        #form-area { display: none; } /* 初始隱藏，讀取完才顯示 */
     </style>
 </head>
 <body>
-    <h3>LIFF UserID 擷取工具</h3>
-    
-    <div id="result-area" style="display:none;">
-        <div class="card">
-            <div class="label">您的 UserID</div>
-            <div class="value" id="disp-userid">讀取中...</div>
-            
-            <div class="label">您的暱稱 (Display Name)</div>
-            <div class="value" id="disp-name">讀取中...</div>
-            
-            <button class="btn" onclick="liff.closeWindow()">關閉視窗</button>
+
+    <div id="loading">正在讀取會員資料...</div>
+
+    <div id="form-area" class="container">
+        <h3>會員資料維護</h3>
+        
+        <div class="form-group">
+            <label>客戶名稱</label>
+            <input type="text" id="u_name" class="form-control" placeholder="請輸入姓名">
         </div>
+
+        <div class="form-group">
+            <label>電話</label>
+            <input type="tel" id="u_phone" class="form-control" placeholder="09xx-xxx-xxx">
+        </div>
+
+        <div class="form-group">
+            <label>地址</label>
+            <input type="text" id="u_addr" class="form-control" placeholder="請輸入地址">
+        </div>
+
+        <div class="form-group">
+            <label>生日</label>
+            <input type="date" id="u_birthday" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label>備註</label>
+            <textarea id="u_memo" class="form-control" placeholder="備註事項..."></textarea>
+        </div>
+
+        <button id="btn-save" class="btn" onclick="saveData()">存檔</button>
     </div>
 
-    <div id="status">正在初始化 LIFF...</div>
-
     <script>
-        // 【設定區】請確認這裡填寫正確
+        // 【設定區】
         const MY_LIFF_ID = '2008965576-txfwY86y';
+        // 請確認這裡是部署後的「新版本」網址
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
 
-        // 網頁載入後執行
+        // 暫存全域變數
+        let currentUserId = '';
+
         window.onload = function() {
             initializeLiff();
         };
@@ -46,54 +76,102 @@
             liff.init({ liffId: MY_LIFF_ID })
                 .then(() => {
                     if (!liff.isLoggedIn()) {
-                        liff.login(); // 沒登入就叫他登入
+                        liff.login();
                     } else {
-                        // 已登入，開始抓資料
-                        getAndShowProfile();
+                        // 取得使用者資訊
+                        liff.getProfile().then(profile => {
+                            currentUserId = profile.userId;
+                            let displayName = profile.displayName;
+                            
+                            // 開始查詢後端資料
+                            checkUserStatus(currentUserId, displayName);
+                        });
                     }
                 })
                 .catch((err) => {
-                    document.getElementById('status').innerText = '初始化失敗: ' + err;
-                    document.getElementById('status').style.color = 'red';
+                    alert('LIFF 初始化失敗: ' + err);
                 });
         }
 
-        function getAndShowProfile() {
-            liff.getProfile().then(profile => {
-                // 1. 【顯示資料】直接顯示在網頁上，這就是您要的 ID！
-                document.getElementById('result-area').style.display = 'block';
-                document.getElementById('disp-userid').innerText = profile.userId;
-                document.getElementById('disp-name').innerText = profile.displayName;
-                document.getElementById('status').innerText = '讀取成功！正在傳送至後端...';
+        // 1. 查詢使用者狀態
+        function checkUserStatus(userId, defaultName) {
+            // 組合查詢網址: action=query
+            const url = GAS_URL + '?action=query&u_id=' + userId;
 
-                // 2. 傳送給後端 (GAS)
-                sendDataToGAS(profile.userId, profile.displayName);
-            }).catch(err => {
-                document.getElementById('status').innerText = '讀取 Profile 失敗: ' + err;
-                document.getElementById('status').style.color = 'red';
+            fetch(url)
+            .then(res => res.json())
+            .then(result => {
+                // 隱藏 Loading，顯示表單
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('form-area').style.display = 'block';
+
+                if (result.status === 'exist') {
+                    // 1.1 存在: 帶入舊資料
+                    let data = result.data;
+                    document.getElementById('u_name').value = data.name;
+                    document.getElementById('u_phone').value = data.phone;
+                    document.getElementById('u_addr').value = data.addr;
+                    document.getElementById('u_birthday').value = data.birthday;
+                    document.getElementById('u_memo').value = data.memo;
+                    console.log('舊會員資料載入完成');
+                } else {
+                    // 1.2 不存在: 預設帶入 LIFF 暱稱
+                    document.getElementById('u_name').value = defaultName;
+                    console.log('新會員，已帶入預設暱稱');
+                }
+            })
+            .catch(err => {
+                document.getElementById('loading').innerText = '讀取失敗，請重新整理';
+                alert('連線錯誤: ' + err);
             });
         }
 
-        function sendDataToGAS(userId, displayName) {
-            // 拼湊網址參數
-            const queryString = "?userId=" + encodeURIComponent(userId) + 
-                              "&displayName=" + encodeURIComponent(displayName);
-            const finalUrl = GAS_URL + queryString;
+        // 2. 存檔功能
+        function saveData() {
+            const btn = document.getElementById('btn-save');
+            
+            // 收集欄位資料
+            const name = document.getElementById('u_name').value;
+            const phone = document.getElementById('u_phone').value;
+            const addr = document.getElementById('u_addr').value;
+            const birthday = document.getElementById('u_birthday').value;
+            const memo = document.getElementById('u_memo').value;
 
-            // 【關鍵修改】使用 mode: 'no-cors'
-            // 這會告訴瀏覽器：「我要送資料，就算跨域也不要報錯」，專門解決 iOS 問題
-            fetch(finalUrl, {
-                method: 'GET',
-                mode: 'no-cors' 
+            if(!name) { alert('請輸入名稱'); return; }
+
+            // 鎖定按鈕
+            btn.disabled = true;
+            btn.innerText = '儲存中...';
+
+            // 組合存檔參數: action=save
+            // 使用 encodeURIComponent 避免中文亂碼
+            const params = `?action=save` +
+                           `&u_id=${encodeURIComponent(currentUserId)}` +
+                           `&name=${encodeURIComponent(name)}` +
+                           `&phone=${encodeURIComponent(phone)}` +
+                           `&addr=${encodeURIComponent(addr)}` +
+                           `&birthday=${encodeURIComponent(birthday)}` +
+                           `&memo=${encodeURIComponent(memo)}`;
+
+            const url = GAS_URL + params;
+
+            // 送出請求
+            fetch(url)
+            .then(res => res.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    alert(result.message); // 顯示「資料已更新」或「建立成功」
+                    liff.closeWindow();    // 關閉視窗
+                } else {
+                    alert('存檔失敗: ' + result.message);
+                    btn.disabled = false;
+                    btn.innerText = '存檔';
+                }
             })
-            .then(() => {
-                // 因為是 no-cors，我們收不到後端回傳的文字，但只要沒報錯就是送出了
-                document.getElementById('status').innerText = '✅ 資料已成功送出！(後端處理中)';
-                document.getElementById('status').style.color = 'green';
-            })
-            .catch(error => {
-                document.getElementById('status').innerText = '❌ 傳送失敗: ' + error;
-                document.getElementById('status').style.color = 'red';
+            .catch(err => {
+                alert('存檔發生錯誤: ' + err);
+                btn.disabled = false;
+                btn.innerText = '存檔';
             });
         }
     </script>
