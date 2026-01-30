@@ -13,6 +13,9 @@
         .form-group { margin-bottom: 15px; text-align: left; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
         
+        /* 必填星號樣式 */
+        .required-mark { color: #e74c3c; margin-left: 3px; }
+        
         .form-control, .form-select { 
             width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; 
             box-sizing: border-box; font-size: 16px; background-color: #fff;
@@ -60,17 +63,17 @@
         <h3>會員資料維護</h3>
         
         <div class="form-group">
-            <label>客戶名稱</label>
+            <label>客戶名稱<span class="required-mark">*</span></label>
             <input type="text" id="u_name" class="form-control" placeholder="請輸入姓名">
         </div>
 
         <div class="form-group">
-            <label>電話</label>
+            <label>電話<span class="required-mark">*</span></label>
             <input type="tel" id="u_phone" class="form-control" placeholder="09xx-xxx-xxx">
         </div>
 
         <div class="form-group">
-            <label>地址</label>
+            <label>地址<span class="required-mark">*</span> (縣市/區域必填)</label>
             <div class="address-row">
                 <select id="addr_city" class="form-select" onchange="updateDistricts()">
                     <option value="">請選擇縣市</option>
@@ -179,18 +182,12 @@
                     document.getElementById('u_name').value = data.name;
                     document.getElementById('u_phone').value = data.phone;
                     document.getElementById('u_birthday').value = data.birthday;
-                    
-                    // 這裡讀取正確的 memo 資料
                     document.getElementById('u_memo').value = data.memo; 
-                    
                     document.getElementById('u_email').value = data.email || ''; 
-                    
-                    // 行銷意願
                     document.getElementById('u_marketing').checked = (data.marketing == 1);
                     
                     parseAndSetAddress(data.addr);
                 } else {
-                    // 新用戶：預設打勾
                     document.getElementById('u_name').value = defaultName;
                     document.getElementById('u_marketing').checked = true; 
                 }
@@ -235,11 +232,38 @@
             const city = document.getElementById("addr_city").value;
             const dist = document.getElementById("addr_dist").value;
             const detail = document.getElementById("addr_detail").value;
-            const fullAddr = city + dist + detail;
+            
+            // 組合完整地址
+            let fullAddr = "";
+            if(city && dist) {
+                fullAddr = city + dist + detail;
+            } else if (detail) {
+                fullAddr = detail; // 雖然有檢核，但保留彈性
+            }
             
             const marketing = document.getElementById('u_marketing').checked ? 1 : 0;
 
-            if(!name) { alert('請輸入名稱'); return; }
+            // 1. 檢查姓名
+            if(!name) { 
+                alert('請輸入客戶名稱'); 
+                return; 
+            }
+
+            // 2. 檢查電話 (新增)
+            if(!phone) { 
+                alert('請輸入電話 (必填)'); 
+                return; 
+            }
+
+            // 3. 檢查地址 (縣市/區域)
+            if(!city || city === "") { 
+                alert('請選擇縣市'); 
+                return; 
+            }
+            if(!dist || dist === "") { 
+                alert('請選擇區域'); 
+                return; 
+            }
 
             btn.disabled = true;
             btn.innerText = '儲存中...';
