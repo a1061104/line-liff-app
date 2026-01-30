@@ -82,6 +82,9 @@
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('r_date').min = today;
 
+            // 🔥 新增這行：印出 ID 來檢查
+            alert('目前的 LIFF ID 是: ' + MY_LIFF_ID);
+
             liff.init({ liffId: MY_LIFF_ID }).then(() => {
                 if (!liff.isLoggedIn()) {
                     liff.login();
@@ -163,3 +166,4 @@
 </body>
 
 </html>
+
