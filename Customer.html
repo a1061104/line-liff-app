@@ -73,6 +73,11 @@
         </div>
 
         <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="u_email" class="form-control" placeholder="例如：example@gmail.com">
+        </div>
+
+        <div class="form-group">
             <label>生日</label>
             <input type="date" id="u_birthday" class="form-control">
         </div>
@@ -88,11 +93,12 @@
     <script>
         // 【設定區】
         const MY_LIFF_ID = '2008965576-txfwY86y'; 
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec'; // 請換成新的 GAS 網址
+        // 請確認這是您的 GAS 網址
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
 
         let currentUserId = '';
 
-        // 台灣縣市區域資料庫 (簡化版示意，請使用之前提供的完整版)
+        // 台灣縣市區域資料庫 (簡化版示意)
         const taiwanData = {
             "基隆市": ["仁愛區", "信義區", "中正區", "中山區", "安樂區", "暖暖區", "七堵區"],
             "台北市": ["中正區", "大同區", "中山區", "松山區", "大安區", "萬華區", "信義區", "士林區", "北投區", "內湖區", "南港區", "文山區"],
@@ -103,7 +109,6 @@
             "台中市": ["中區", "東區", "南區", "西區", "北區", "北屯區", "西屯區", "南屯區", "太平區", "大里區", "霧峰區", "烏日區", "豐原區", "后里區", "潭子區", "大雅區", "神岡區"],
             "台南市": ["中西區", "東區", "南區", "北區", "安平區", "安南區", "永康區", "歸仁區", "新化區", "左鎮區", "玉井區", "楠西區", "南化區", "仁德區", "關廟區", "龍崎區", "官田區", "麻豆區", "佳里區"],
             "高雄市": ["新興區", "前金區", "苓雅區", "鹽埕區", "鼓山區", "旗津區", "前鎮區", "三民區", "楠梓區", "小港區", "左營區", "仁武區", "大社區", "岡山區", "路竹區", "鳳山區", "大寮區", "林園區"]
-            // ... (若需要完整全台資料，請使用上次提供的完整清單)
         };
 
         window.onload = function() {
@@ -152,7 +157,6 @@
         }
 
         function checkUserStatus(userId, defaultName) {
-            // Customer 查詢維持 action=query
             const url = GAS_URL + '?action=query&u_id=' + userId;
             fetch(url).then(res => res.json()).then(result => {
                 document.getElementById('loading').style.display = 'none';
@@ -163,6 +167,7 @@
                     document.getElementById('u_phone').value = data.phone;
                     document.getElementById('u_birthday').value = data.birthday;
                     document.getElementById('u_memo').value = data.memo;
+                    document.getElementById('u_email').value = data.email || ''; // 回填 Email
                     parseAndSetAddress(data.addr);
                 } else {
                     document.getElementById('u_name').value = defaultName;
@@ -204,6 +209,7 @@
             const phone = document.getElementById('u_phone').value;
             const birthday = document.getElementById('u_birthday').value;
             const memo = document.getElementById('u_memo').value;
+            const email = document.getElementById('u_email').value; // 取得 Email
             const city = document.getElementById("addr_city").value;
             const dist = document.getElementById("addr_dist").value;
             const detail = document.getElementById("addr_detail").value;
@@ -214,12 +220,12 @@
             btn.disabled = true;
             btn.innerText = '儲存中...';
 
-            // Customer 存檔維持 action=save
             const params = `?action=save` +
                            `&u_id=${encodeURIComponent(currentUserId)}` +
                            `&name=${encodeURIComponent(name)}` +
                            `&phone=${encodeURIComponent(phone)}` +
                            `&addr=${encodeURIComponent(fullAddr)}` +
+                           `&email=${encodeURIComponent(email)}` +  // 傳送 Email
                            `&birthday=${encodeURIComponent(birthday)}` +
                            `&memo=${encodeURIComponent(memo)}`;
 
