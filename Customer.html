@@ -19,6 +19,7 @@
             -webkit-appearance: none; appearance: none; min-height: 44px;
         }
         
+        /* 下拉選單箭頭 */
         .form-select {
             background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat;
@@ -41,7 +42,7 @@
             border-radius: 5px; 
             border: 1px solid #c8e6c9; 
             cursor: pointer;
-            margin-top: 15px;
+            margin-top: 20px;
         }
         .checkbox-item input { margin-right: 15px; width: 22px; height: 22px; accent-color: #06c755; }
         .checkbox-item label { margin: 0; cursor: pointer; color: #2e7d32; font-weight: bold; }
@@ -181,19 +182,19 @@
                     document.getElementById('u_phone').value = data.phone;
                     document.getElementById('u_birthday').value = data.birthday;
                     
-                    // 修正關鍵：確認讀到的是 Memo (文字) 而不是 Flag (數字 1)
+                    // 這裡讀取正確的 memo 資料
                     document.getElementById('u_memo').value = data.memo; 
                     
                     document.getElementById('u_email').value = data.email || ''; 
                     
-                    // 行銷意願：資料庫存 1 為勾選，否則取消
+                    // 行銷意願
                     document.getElementById('u_marketing').checked = (data.marketing == 1);
                     
                     parseAndSetAddress(data.addr);
                 } else {
-                    // 新用戶預設值
+                    // 新用戶：預設打勾
                     document.getElementById('u_name').value = defaultName;
-                    document.getElementById('u_marketing').checked = true; // 預設願意接收
+                    document.getElementById('u_marketing').checked = true; 
                 }
             }).catch(err => { document.getElementById('loading').innerText = '讀取失敗'; alert('連線錯誤: ' + err); });
         }
