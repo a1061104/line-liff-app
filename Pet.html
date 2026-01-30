@@ -9,6 +9,16 @@
         body { font-family: -apple-system, sans-serif; background-color: #f5f5f5; padding: 15px; margin: 0; }
         .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; }
         h3 { text-align: center; color: #333; margin-top: 0; }
+
+        /* 寵物選擇區塊 */
+        .pet-selector {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #c8e6c9;
+        }
+        .pet-selector label { font-weight: bold; color: #2e7d32; display: block; margin-bottom: 8px; }
         
         .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
         .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: #666; font-weight: bold; }
@@ -33,13 +43,25 @@
         
         .btn { width: 100%; padding: 14px; background-color: #06c755; color: white; border: none; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
         .btn:disabled { background-color: #ccc; }
+        
+        /* Loading 遮罩 */
+        #loading-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 999; }
     </style>
 </head>
 <body>
 
+    <div id="loading-mask"><div>資料讀取中...</div></div>
+
     <div class="container">
-        <h3>🐶 寵物資料建檔 🐱</h3>
+        <h3>🐶 寵物資料管理 🐱</h3>
         
+        <div class="pet-selector">
+            <label>選擇要編輯的寵物：</label>
+            <select id="pet-select" class="form-select" onchange="onPetSelectChange()">
+                <option value="new">➕ 新增寵物 (New Pet)</option>
+            </select>
+        </div>
+
         <div class="tabs">
             <div class="tab active" onclick="switchTab('basic')">基本資料</div>
             <div class="tab" onclick="switchTab('sick')">健康狀況</div>
@@ -47,6 +69,8 @@
         </div>
 
         <div id="tab-basic" class="tab-content active">
+            <input type="hidden" id="current_p_id" value="">
+
             <div class="form-group">
                 <label>寵物名稱</label>
                 <input type="text" id="p_name" class="form-control" placeholder="例如：小白">
@@ -134,13 +158,14 @@
                 </div>
             </div>
             
-            <button id="btn-save" class="btn" onclick="savePet()">確認建檔</button>
+            <button id="btn-save" class="btn" onclick="savePet()">確認儲存</button>
         </div>
     </div>
 
     <script>
         const MY_LIFF_ID = '2008965576-txfwY86y'; 
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec'; // 請換成新的 GAS 網址
+        // 請確認這是您的 GAS 網址
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
 
         let currentUserId = '';
 
@@ -151,10 +176,111 @@
                 } else {
                     liff.getProfile().then(profile => {
                         currentUserId = profile.userId;
+                        // 登入後先載入寵物列表
+                        loadPetList();
                     });
                 }
             });
         };
+
+        // 1. 載入寵物列表
+        function loadPetList() {
+            fetch(GAS_URL + `?action=pet_query_list&u_id=${encodeURIComponent(currentUserId)}`)
+            .then(res => res.json())
+            .then(result => {
+                document.getElementById('loading-mask').style.display = 'none';
+                if (result.status === 'success') {
+                    const select = document.getElementById('pet-select');
+                    // 清空除了「新增寵物」以外的選項
+                    select.innerHTML = '<option value="new">➕ 新增寵物 (New Pet)</option>';
+                    
+                    // 填入既有寵物
+                    result.data.forEach(pet => {
+                        let option = document.createElement('option');
+                        option.value = pet.p_id;
+                        option.text = `🐶 ${pet.p_name}`; // 可以根據類型顯示不同圖示
+                        select.appendChild(option);
+                    });
+                }
+            });
+        }
+
+        // 2. 切換寵物 (新增模式 vs 編輯模式)
+        function onPetSelectChange() {
+            const petId = document.getElementById('pet-select').value;
+            if (petId === 'new') {
+                resetForm(); // 清空表單
+            } else {
+                loadPetDetail(petId); // 載入資料
+            }
+        }
+
+        // 3. 讀取單一寵物詳細資料
+        function loadPetDetail(petId) {
+            document.getElementById('loading-mask').style.display = 'flex';
+            
+            fetch(GAS_URL + `?action=pet_query_detail&p_id=${petId}`)
+            .then(res => res.json())
+            .then(result => {
+                document.getElementById('loading-mask').style.display = 'none';
+                if (result.status === 'success') {
+                    const d = result.data;
+                    document.getElementById('current_p_id').value = petId; // 設定目前編輯的 ID
+                    
+                    // 回填基本資料
+                    if(d.basic) {
+                        document.getElementById('p_name').value = d.basic.p_name;
+                        document.getElementById('p_type').value = d.basic.p_type;
+                        document.getElementById('p_sex').value = d.basic.p_sex;
+                        document.getElementById('p_breeds').value = d.basic.p_breeds;
+                        document.getElementById('p_birthday').value = d.basic.p_birthday;
+                        document.getElementById('p_ic').value = d.basic.p_ic;
+                        document.getElementById('p_memo').value = d.basic.p_memo;
+                    }
+
+                    // 回填疾病資料 (Checkbox)
+                    if(d.sick) {
+                        const setCheck = (id, val) => {
+                            document.getElementById(id).checked = (val == 1);
+                        };
+                        setCheck('ps_healthy', d.sick.ps_healthy);
+                        // 觸發一次 healthy 邏輯 (如果健康要鎖定其他)
+                        toggleHealthy(document.getElementById('ps_healthy'));
+
+                        setCheck('ps_ckd', d.sick.ps_ckd); setCheck('ps_ntds', d.sick.ps_ntds);
+                        setCheck('ps_rv', d.sick.ps_rv); setCheck('ps_oa', d.sick.ps_oa);
+                        setCheck('ps_dl', d.sick.ps_dl); setCheck('ps_hi', d.sick.ps_hi);
+                        setCheck('ps_vi', d.sick.ps_vi); setCheck('ps_hwd', d.sick.ps_hwd);
+                        setCheck('ps_gi', d.sick.ps_gi); setCheck('ps_cdv', d.sick.ps_cdv);
+                        setCheck('ps_piv', d.sick.ps_piv); setCheck('ps_ad', d.sick.ps_ad);
+                        document.getElementById('ps_other').value = d.sick.ps_other;
+                    }
+
+                    // 回填注意事項
+                    if(d.wariness) {
+                        const setCheck = (id, val) => { document.getElementById(id).checked = (val == 1); };
+                        setCheck('pw_asb', d.wariness.pw_asb); setCheck('pw_wn', d.wariness.pw_wn);
+                        setCheck('pw_mani', d.wariness.pw_mani); setCheck('pw_sad', d.wariness.pw_sad);
+                        setCheck('pw_dds', d.wariness.pw_dds); setCheck('pw_pd', d.wariness.pw_pd);
+                        document.getElementById('pw_bwa').value = d.wariness.pw_bwa;
+                        document.getElementById('pw_other').value = d.wariness.pw_other;
+                    }
+                }
+            });
+        }
+
+        // 4. 清空表單 (新增模式)
+        function resetForm() {
+            document.getElementById('current_p_id').value = ''; // 清空 ID 代表新增
+            document.querySelectorAll('input[type=text], input[type=date], textarea').forEach(el => el.value = '');
+            document.querySelectorAll('input[type=checkbox]').forEach(el => {
+                el.checked = false;
+                el.disabled = false;
+            });
+            document.getElementById('p_type').value = '1';
+            document.getElementById('p_sex').value = 'B';
+            switchTab('basic'); // 切回第一頁
+        }
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -188,8 +314,10 @@
             btn.disabled = true;
             btn.innerText = '資料儲存中...';
 
-            // ⚠️ 關鍵：動作改為 pet_save
+            const p_id = document.getElementById('current_p_id').value; // 取得目前 ID (空值=新增)
+
             let params = `?action=pet_save&u_id=${encodeURIComponent(currentUserId)}`;
+            params += `&p_id=${p_id}`; // 傳送 ID 給後端判斷是新增還是更新
             
             params += `&p_name=${encodeURIComponent(name)}`;
             params += `&p_type=${document.getElementById('p_type').value}`;
@@ -216,18 +344,18 @@
                 .then(res => res.json())
                 .then(result => {
                     if (result.status === 'success') {
-                        alert(`建檔成功！\n寵物 ID: ${result.p_id}`);
-                        liff.closeWindow();
+                        alert(`儲存成功！`);
+                        location.reload(); // 重新整理頁面以更新列表
                     } else {
                         alert('存檔失敗: ' + result.message);
                         btn.disabled = false;
-                        btn.innerText = '確認建檔';
+                        btn.innerText = '確認儲存';
                     }
                 })
                 .catch(err => {
                     alert('連線錯誤: ' + err);
                     btn.disabled = false;
-                    btn.innerText = '確認建檔';
+                    btn.innerText = '確認儲存';
                 });
         }
     </script>
