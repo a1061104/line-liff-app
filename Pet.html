@@ -11,36 +11,10 @@
         h3 { text-align: center; color: #333; margin-top: 0; }
 
         /* 頂部操作區 */
-        .pet-controls {
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-            margin-bottom: 20px;
-            background-color: #e8f5e9;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #c8e6c9;
-        }
-        
-        .pet-select-wrapper {
-            flex-grow: 1;
-            position: relative;
-        }
+        .pet-controls { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 20px; background-color: #e8f5e9; padding: 15px; border-radius: 8px; border: 1px solid #c8e6c9; }
+        .pet-select-wrapper { flex-grow: 1; position: relative; }
         .pet-select-wrapper label { font-weight: bold; color: #2e7d32; display: block; margin-bottom: 5px; font-size: 14px; }
-        
-        .btn-add-new {
-            flex-shrink: 0;
-            background-color: #ff9800;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            height: 44px;
-            display: flex;
-            align-items: center;
-        }
+        .btn-add-new { flex-shrink: 0; background-color: #ff9800; color: white; border: none; padding: 10px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; height: 44px; display: flex; align-items: center; }
 
         .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
         .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: #666; font-weight: bold; }
@@ -52,26 +26,48 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #555; }
         
+        /* --- CSS 修改重點開始 --- */
         .form-control, .form-select { 
-            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; 
+            width: 100%; 
+            /* 修改：將原本的 padding: 10px 改為左右 10px，上下由 height 自動置中 */
+            padding: 0 10px; 
+            border: 1px solid #ddd; border-radius: 5px; 
             box-sizing: border-box; font-size: 16px; background-color: #fff;
             height: 44px;
+            /* 新增：確保文字垂直置中 (高度減去上下邊框) */
+            line-height: 42px; 
+            /* 新增：統一各瀏覽器的輸入框外觀 */
+            -webkit-appearance: none;
+            appearance: none;
         }
         
         .form-select {
+            /* select 需要右側空間放箭頭，覆蓋上面的 padding 設定 */
+            padding-right: 30px;
+            /* select 的 line-height 通常設為 normal 表現較好 */
+            line-height: normal;
+            
             appearance: none;
             -webkit-appearance: none;
-            -moz-appearance: none;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
             background-repeat: no-repeat;
             background-position: right 10px center;
             background-size: 16px;
-            padding-right: 30px;
             color: #333;
         }
         
         .form-select:disabled, .form-select.placeholder { color: #888; }
-        input[type="date"].form-control { line-height: 1.4; display: block; }
+        
+        /* 修改：移除原本針對 date 設定的 line-height: 1.4，加入 min-height 確保 iOS 顯示正常 */
+        input[type="date"].form-control { 
+            display: block; 
+            min-height: 44px; 
+            /* 確保在 iOS 上日期選擇器能垂直置中顯示 */
+            line-height: normal; 
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+        /* --- CSS 修改重點結束 --- */
         
         .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .checkbox-item { display: flex; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #eee; }
@@ -157,7 +153,7 @@
             </div>
             <div class="form-group">
                 <label>備註</label>
-                <textarea id="p_memo" class="form-control" style="height:60px;"></textarea>
+                <textarea id="p_memo" class="form-control" style="height:60px; line-height: 1.4; padding: 10px;"></textarea>
             </div>
         </div>
 
