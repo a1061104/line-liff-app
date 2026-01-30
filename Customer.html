@@ -6,7 +6,6 @@
     <title>會員資料維護</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        /* CSS 樣式區 */
         body { font-family: -apple-system, sans-serif; background-color: #f5f5f5; padding: 20px; }
         .container { background: white; max-width: 500px; margin: 0 auto; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         h3 { text-align: center; color: #333; margin-bottom: 20px; }
@@ -31,10 +30,9 @@
         .address-row select { width: 50%; }
 
         input[type="date"].form-control { line-height: 1.4; display: block; }
-        .form-control:focus, .form-select:focus { border-color: #06c755; outline: none; }
         textarea.form-control { resize: vertical; height: 80px; }
 
-        /* Checkbox 樣式 */
+        /* 行銷勾選框樣式 */
         .checkbox-item { 
             display: flex; 
             align-items: center; 
@@ -43,7 +41,7 @@
             border-radius: 5px; 
             border: 1px solid #c8e6c9; 
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 15px;
         }
         .checkbox-item input { margin-right: 15px; width: 22px; height: 22px; accent-color: #06c755; }
         .checkbox-item label { margin: 0; cursor: pointer; color: #2e7d32; font-weight: bold; }
@@ -109,14 +107,12 @@
     </div>
 
     <script>
-        // 【設定區】
         const MY_LIFF_ID = '2008965576-txfwY86y'; 
-        // 請確認這是您的 GAS 網址
+        // ⚠️ 請確認這是您的 GAS 網址
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
 
         let currentUserId = '';
 
-        // 台灣縣市區域資料庫 (簡化版示意)
         const taiwanData = {
             "基隆市": ["仁愛區", "信義區", "中正區", "中山區", "安樂區", "暖暖區", "七堵區"],
             "台北市": ["中正區", "大同區", "中山區", "松山區", "大安區", "萬華區", "信義區", "士林區", "北投區", "內湖區", "南港區", "文山區"],
@@ -167,8 +163,7 @@
                 } else {
                     liff.getProfile().then(profile => {
                         currentUserId = profile.userId;
-                        let displayName = profile.displayName;
-                        checkUserStatus(currentUserId, displayName);
+                        checkUserStatus(currentUserId, profile.displayName);
                     });
                 }
             }).catch(err => { alert('LIFF 初始化失敗: ' + err); });
@@ -179,22 +174,26 @@
             fetch(url).then(res => res.json()).then(result => {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('form-area').style.display = 'block';
+                
                 if (result.status === 'exist') {
                     let data = result.data;
                     document.getElementById('u_name').value = data.name;
                     document.getElementById('u_phone').value = data.phone;
                     document.getElementById('u_birthday').value = data.birthday;
                     
-                    // 修正後，這裡將會正確顯示 Memo 而不是 1
+                    // 修正關鍵：確認讀到的是 Memo (文字) 而不是 Flag (數字 1)
                     document.getElementById('u_memo').value = data.memo; 
                     
                     document.getElementById('u_email').value = data.email || ''; 
+                    
+                    // 行銷意願：資料庫存 1 為勾選，否則取消
                     document.getElementById('u_marketing').checked = (data.marketing == 1);
                     
                     parseAndSetAddress(data.addr);
                 } else {
+                    // 新用戶預設值
                     document.getElementById('u_name').value = defaultName;
-                    document.getElementById('u_marketing').checked = true;
+                    document.getElementById('u_marketing').checked = true; // 預設願意接收
                 }
             }).catch(err => { document.getElementById('loading').innerText = '讀取失敗'; alert('連線錯誤: ' + err); });
         }
