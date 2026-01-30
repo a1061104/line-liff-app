@@ -166,8 +166,8 @@
                     document.getElementById('u_name').value = data.name;
                     document.getElementById('u_phone').value = data.phone;
                     document.getElementById('u_birthday').value = data.birthday;
-                    document.getElementById('u_memo').value = data.memo;
-                    document.getElementById('u_email').value = data.email || ''; // 回填 Email
+                    document.getElementById('u_memo').value = data.memo; // 這裡讀到的一定要是 memo，不能是 flag
+                    document.getElementById('u_email').value = data.email || ''; 
                     parseAndSetAddress(data.addr);
                 } else {
                     document.getElementById('u_name').value = defaultName;
@@ -209,7 +209,7 @@
             const phone = document.getElementById('u_phone').value;
             const birthday = document.getElementById('u_birthday').value;
             const memo = document.getElementById('u_memo').value;
-            const email = document.getElementById('u_email').value; // 取得 Email
+            const email = document.getElementById('u_email').value; 
             const city = document.getElementById("addr_city").value;
             const dist = document.getElementById("addr_dist").value;
             const detail = document.getElementById("addr_detail").value;
@@ -225,7 +225,7 @@
                            `&name=${encodeURIComponent(name)}` +
                            `&phone=${encodeURIComponent(phone)}` +
                            `&addr=${encodeURIComponent(fullAddr)}` +
-                           `&email=${encodeURIComponent(email)}` +  // 傳送 Email
+                           `&email=${encodeURIComponent(email)}` +  
                            `&birthday=${encodeURIComponent(birthday)}` +
                            `&memo=${encodeURIComponent(memo)}`;
 
