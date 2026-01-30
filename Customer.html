@@ -35,6 +35,19 @@
         .form-control:focus, .form-select:focus { border-color: #06c755; outline: none; }
         textarea.form-control { resize: vertical; height: 80px; }
 
+        /* Checkbox 樣式 (新增) */
+        .checkbox-item { 
+            display: flex; 
+            align-items: center; 
+            background: #f0fdf4; /* 淡淡的綠色背景 */
+            padding: 15px; 
+            border-radius: 5px; 
+            border: 1px solid #c8e6c9; 
+            cursor: pointer;
+        }
+        .checkbox-item input { margin-right: 15px; width: 22px; height: 22px; accent-color: #06c755; }
+        .checkbox-item label { margin: 0; cursor: pointer; color: #2e7d32; }
+
         .btn { width: 100%; padding: 12px; background-color: #06c755; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; font-weight: bold; }
         .btn:disabled { background-color: #ccc; }
         
@@ -80,6 +93,11 @@
         <div class="form-group">
             <label>生日</label>
             <input type="date" id="u_birthday" class="form-control">
+        </div>
+
+        <div class="form-group checkbox-item" onclick="document.getElementById('u_marketing').click();">
+            <input type="checkbox" id="u_marketing" checked onclick="event.stopPropagation();">
+            <label for="u_marketing">願意接收門市優惠與促銷訊息</label>
         </div>
 
         <div class="form-group">
@@ -166,11 +184,18 @@
                     document.getElementById('u_name').value = data.name;
                     document.getElementById('u_phone').value = data.phone;
                     document.getElementById('u_birthday').value = data.birthday;
-                    document.getElementById('u_memo').value = data.memo; // 這裡讀到的一定要是 memo，不能是 flag
+                    document.getElementById('u_memo').value = data.memo; 
                     document.getElementById('u_email').value = data.email || ''; 
+                    
+                    // 回填行銷意願 (資料庫存 1 或 0)
+                    // 如果資料庫是 1 (願意)，則打勾；否則取消
+                    document.getElementById('u_marketing').checked = (data.marketing == 1);
+                    
                     parseAndSetAddress(data.addr);
                 } else {
+                    // 新使用者：填入預設名稱，行銷意願預設打勾
                     document.getElementById('u_name').value = defaultName;
+                    document.getElementById('u_marketing').checked = true;
                 }
             }).catch(err => { document.getElementById('loading').innerText = '讀取失敗'; alert('連線錯誤: ' + err); });
         }
@@ -214,6 +239,9 @@
             const dist = document.getElementById("addr_dist").value;
             const detail = document.getElementById("addr_detail").value;
             const fullAddr = city + dist + detail;
+            
+            // 取得行銷意願 (有勾=1, 沒勾=0)
+            const marketing = document.getElementById('u_marketing').checked ? 1 : 0;
 
             if(!name) { alert('請輸入名稱'); return; }
 
@@ -227,6 +255,7 @@
                            `&addr=${encodeURIComponent(fullAddr)}` +
                            `&email=${encodeURIComponent(email)}` +  
                            `&birthday=${encodeURIComponent(birthday)}` +
+                           `&marketing=${marketing}` + // 傳送行銷意願
                            `&memo=${encodeURIComponent(memo)}`;
 
             fetch(GAS_URL + params)
