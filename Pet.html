@@ -24,7 +24,7 @@
         
         .pet-select-wrapper {
             flex-grow: 1;
-            position: relative; /* 為了放箭頭 */
+            position: relative;
         }
         .pet-select-wrapper label { font-weight: bold; color: #2e7d32; display: block; margin-bottom: 5px; font-size: 14px; }
         
@@ -52,10 +52,6 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #555; }
         
-        /* 優化下拉選單樣式：
-           1. appearance: none 移除預設醜醜的箭頭
-           2. 使用 background-image 加入自定義箭頭
-        */
         .form-control, .form-select { 
             width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; 
             box-sizing: border-box; font-size: 16px; background-color: #fff;
@@ -63,23 +59,18 @@
         }
         
         .form-select {
-            appearance: none; /* 移除瀏覽器預設箭頭 */
+            appearance: none;
             -webkit-appearance: none;
             -moz-appearance: none;
-            /* 自定義箭頭圖示 (SVG) */
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
             background-repeat: no-repeat;
             background-position: right 10px center;
             background-size: 16px;
-            padding-right: 30px; /* 預留空間給箭頭 */
+            padding-right: 30px;
             color: #333;
         }
         
-        /* 當選單被禁用或無效時的樣式 */
-        .form-select:disabled, .form-select.placeholder {
-            color: #888;
-        }
-
+        .form-select:disabled, .form-select.placeholder { color: #888; }
         input[type="date"].form-control { line-height: 1.4; display: block; }
         
         .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -145,14 +136,17 @@
             </div>
             
             <div class="form-group">
+                <label>品種</label>
+                <select id="p_breeds" class="form-select">
+                    <option value="">讀取中...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
                 <label>體重 (KG)</label>
                 <input type="number" id="p_weight" class="form-control" placeholder="例如：5.5" step="0.1">
             </div>
 
-            <div class="form-group">
-                <label>品種</label>
-                <input type="text" id="p_breeds" class="form-control" placeholder="例如：柴犬">
-            </div>
             <div class="form-group">
                 <label>生日</label>
                 <input type="date" id="p_birthday" class="form-control">
@@ -226,19 +220,67 @@
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
 
         let currentUserId = '';
+        let allBreedsData = []; // 儲存所有品種資料
 
         window.onload = function() {
             liff.init({ liffId: MY_LIFF_ID }).then(() => {
-                if (!liff.isLoggedIn()) {
-                    liff.login();
-                } else {
-                    liff.getProfile().then(profile => {
-                        currentUserId = profile.userId;
-                        loadPetList(); // 登入後載入列表
-                    });
-                }
+                // 1. 先去抓品種資料
+                loadBreedData().then(() => {
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                    } else {
+                        liff.getProfile().then(profile => {
+                            currentUserId = profile.userId;
+                            loadPetList(); // 登入後載入寵物列表
+                        });
+                    }
+                });
+            });
+
+            // 監聽種類改變，即時更新品種選單
+            document.getElementById('p_type').addEventListener('change', function() {
+                renderBreedsOptions();
             });
         };
+
+        // 新增：載入品種資料 (Basic_Data)
+        function loadBreedData() {
+            return fetch(GAS_URL + `?action=pet_get_breeds`)
+                .then(res => res.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        allBreedsData = result.data;
+                        // 預設先渲染一次 (根據預設 p_type=1)
+                        renderBreedsOptions(); 
+                    }
+                })
+                .catch(err => console.error('品種載入失敗', err));
+        }
+
+        // 新增：根據目前 P_Type 篩選品種並渲染選單
+        function renderBreedsOptions(selectedValue = '') {
+            const type = document.getElementById('p_type').value; // 1=狗, 2=貓
+            const select = document.getElementById('p_breeds');
+            
+            select.innerHTML = '<option value="">請選擇品種</option>';
+
+            // 篩選邏輯：Code 的第一碼必須等於 p_type
+            const filtered = allBreedsData.filter(item => item.code.toString().startsWith(type));
+
+            filtered.forEach(item => {
+                let option = document.createElement('option');
+                option.value = item.name; // 存名稱
+                option.text = item.name;
+                select.appendChild(option);
+            });
+
+            // 如果有舊資料要回填
+            if (selectedValue) {
+                // 檢查該值是否在清單內，如果不在(例如自填的舊資料)，可能要加回去或保持空白
+                // 這裡假設舊資料一定在清單內
+                select.value = selectedValue;
+            }
+        }
 
         // 1. 載入寵物列表
         function loadPetList() {
@@ -250,11 +292,10 @@
                     const select = document.getElementById('pet-select');
                     select.innerHTML = ''; 
                     
-                    // 1-1. 加入預設提示選項 (關鍵修改：這是為了讓新增模式有東西可以顯示)
                     let placeholderOption = document.createElement('option');
                     placeholderOption.value = "";
                     placeholderOption.text = "🔽 請選擇欲修改的寵物...";
-                    placeholderOption.disabled = true; // 不能選
+                    placeholderOption.disabled = true;
                     select.appendChild(placeholderOption);
 
                     if (result.data.length > 0) {
@@ -265,12 +306,10 @@
                             select.appendChild(option);
                         });
                         
-                        // 自動載入第一隻寵物的資料 (index 1 因為 0 是 placeholder)
                         select.selectedIndex = 1;
                         loadPetDetail(result.data[0].p_id);
                         updateModeLabel(false);
                     } else {
-                        // 沒寵物：自動切換到新增模式
                         placeholderOption.text = "(尚無寵物資料)";
                         select.selectedIndex = 0;
                         select.disabled = true;
@@ -280,20 +319,13 @@
             });
         }
 
-        // 2. 切換至「新增模式」 (按鈕觸發)
         function switchToNewPetMode() {
             const select = document.getElementById('pet-select');
-            
-            // 關鍵修改：不再新增 "new_temp" 選項
-            // 而是直接將選單的值設為空 (會顯示 "🔽 請選擇欲修改的寵物...")
-            // 這樣視覺上就乾淨多了
             select.value = ""; 
-            
             resetForm();
-            updateModeLabel(true); // 顯示為新增模式
+            updateModeLabel(true);
         }
 
-        // 3. 選擇既有寵物 (下拉選單觸發)
         function onPetSelectChange() {
             const petId = document.getElementById('pet-select').value;
             if (petId) {
@@ -312,15 +344,11 @@
                 textSpan.innerText = '新增模式';
                 textSpan.style.color = '#ff9800';
                 document.getElementById('btn-save').innerText = '確認新增';
-                
-                // 新增模式下，下拉選單變成灰色，提示這不是目前焦點
                 select.classList.add('placeholder');
             } else {
                 textSpan.innerText = '維護模式';
                 textSpan.style.color = '#06c755';
                 document.getElementById('btn-save').innerText = '儲存修改';
-                
-                // 編輯模式下，移除灰色
                 select.classList.remove('placeholder');
             }
         }
@@ -339,9 +367,12 @@
                     if(d.basic) {
                         document.getElementById('p_name').value = d.basic.p_name;
                         document.getElementById('p_type').value = d.basic.p_type;
+                        
+                        // 關鍵：設定種類後，馬上渲染品種選單，並選取舊資料
+                        renderBreedsOptions(d.basic.p_breeds); 
+                        
                         document.getElementById('p_sex').value = d.basic.p_sex;
                         document.getElementById('p_weight').value = d.basic.p_weight; 
-                        document.getElementById('p_breeds').value = d.basic.p_breeds;
                         document.getElementById('p_birthday').value = d.basic.p_birthday;
                         document.getElementById('p_ic').value = d.basic.p_ic;
                         document.getElementById('p_memo').value = d.basic.p_memo;
@@ -385,6 +416,10 @@
                 el.disabled = false;
             });
             document.getElementById('p_type').value = '1';
+            
+            // 重設時，重新渲染一次 (預設為狗)
+            renderBreedsOptions();
+
             document.getElementById('p_sex').value = 'B';
             switchTab('basic');
         }
@@ -430,7 +465,10 @@
             params += `&p_type=${document.getElementById('p_type').value}`;
             params += `&p_sex=${document.getElementById('p_sex').value}`;
             params += `&p_weight=${encodeURIComponent(document.getElementById('p_weight').value)}`;
+            
+            // 品種這邊改為抓取選單的值
             params += `&p_breeds=${encodeURIComponent(document.getElementById('p_breeds').value)}`;
+            
             params += `&p_birthday=${document.getElementById('p_birthday').value}`;
             params += `&p_ic=${encodeURIComponent(document.getElementById('p_ic').value)}`;
             params += `&p_memo=${encodeURIComponent(document.getElementById('p_memo').value)}`;
