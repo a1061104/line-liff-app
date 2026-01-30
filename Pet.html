@@ -10,15 +10,37 @@
         .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; }
         h3 { text-align: center; color: #333; margin-top: 0; }
 
-        .pet-selector {
+        /* 修改後的頂部操作區 (Flexbox 排版) */
+        .pet-controls {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end; /* 對齊底部 */
+            margin-bottom: 20px;
             background-color: #e8f5e9;
             padding: 15px;
             border-radius: 8px;
-            margin-bottom: 20px;
             border: 1px solid #c8e6c9;
         }
-        .pet-selector label { font-weight: bold; color: #2e7d32; display: block; margin-bottom: 8px; }
         
+        .pet-select-wrapper {
+            flex-grow: 1; /* 佔滿剩餘空間 */
+        }
+        .pet-select-wrapper label { font-weight: bold; color: #2e7d32; display: block; margin-bottom: 5px; font-size: 14px; }
+        
+        .btn-add-new {
+            flex-shrink: 0; /* 不壓縮 */
+            background-color: #ff9800; /* 橘色按鈕區分 */
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            height: 44px; /* 與輸入框等高 */
+            display: flex;
+            align-items: center;
+        }
+
         .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
         .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: #666; font-weight: bold; }
         .tab.active { color: #06c755; border-bottom: 2px solid #06c755; }
@@ -33,6 +55,7 @@
             width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; 
             box-sizing: border-box; font-size: 16px; background-color: #fff;
             -webkit-appearance: none; appearance: none;
+            height: 44px;
         }
         input[type="date"].form-control { line-height: 1.4; display: block; }
         
@@ -44,6 +67,9 @@
         .btn:disabled { background-color: #ccc; }
         
         #loading-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 999; }
+        
+        /* 狀態標籤 */
+        #mode-label { font-size: 12px; color: #666; text-align: right; margin-top: -15px; margin-bottom: 10px; display: none;}
     </style>
 </head>
 <body>
@@ -53,12 +79,18 @@
     <div class="container">
         <h3>🐶 寵物資料管理 🐱</h3>
         
-        <div class="pet-selector">
-            <label>選擇要編輯的寵物：</label>
-            <select id="pet-select" class="form-select" onchange="onPetSelectChange()">
-                <option value="new">➕ 新增寵物 (New Pet)</option>
-            </select>
+        <div class="pet-controls">
+            <div class="pet-select-wrapper">
+                <label>維護既有寵物：</label>
+                <select id="pet-select" class="form-select" onchange="onPetSelectChange()">
+                    <option value="">(讀取中...)</option>
+                </select>
+            </div>
+            <button class="btn-add-new" onclick="switchToNewPetMode()">
+                ➕ 新增
+            </button>
         </div>
+        <div id="mode-label">目前模式：<span id="current-mode-text" style="font-weight:bold; color:#06c755;">編輯中</span></div>
 
         <div class="tabs">
             <div class="tab active" onclick="switchTab('basic')">基本資料</div>
@@ -180,12 +212,13 @@
                 } else {
                     liff.getProfile().then(profile => {
                         currentUserId = profile.userId;
-                        loadPetList();
+                        loadPetList(); // 登入後載入列表
                     });
                 }
             });
         };
 
+        // 1. 載入寵物列表 (自動選擇第一隻)
         function loadPetList() {
             fetch(GAS_URL + `?action=pet_query_list&u_id=${encodeURIComponent(currentUserId)}`)
             .then(res => res.json())
@@ -193,23 +226,80 @@
                 document.getElementById('loading-mask').style.display = 'none';
                 if (result.status === 'success') {
                     const select = document.getElementById('pet-select');
-                    select.innerHTML = '<option value="new">➕ 新增寵物 (New Pet)</option>';
-                    result.data.forEach(pet => {
+                    select.innerHTML = ''; // 清空選項
+                    
+                    if (result.data.length > 0) {
+                        // 有寵物：填入選項並自動選第一隻
+                        result.data.forEach(pet => {
+                            let option = document.createElement('option');
+                            option.value = pet.p_id;
+                            option.text = `🐶 ${pet.p_name}`;
+                            select.appendChild(option);
+                        });
+                        
+                        // 【關鍵】自動載入第一隻寵物的資料
+                        select.selectedIndex = 0;
+                        loadPetDetail(result.data[0].p_id);
+                        updateModeLabel(false); // 顯示為編輯模式
+                    } else {
+                        // 沒寵物：自動切換到新增模式
                         let option = document.createElement('option');
-                        option.value = pet.p_id;
-                        option.text = `🐶 ${pet.p_name}`;
+                        option.text = "(尚無寵物資料)";
                         select.appendChild(option);
-                    });
+                        select.disabled = true; // 鎖定下拉選單
+                        switchToNewPetMode();
+                    }
                 }
             });
         }
 
+        // 2. 切換至「新增模式」 (按鈕觸發)
+        function switchToNewPetMode() {
+            // 視覺上的處理
+            document.getElementById('pet-select').value = ""; // 取消下拉選單選取狀態 (若有)
+            
+            // 插入一個暫時的「新增中」選項，讓使用者知道現在不在編輯舊資料
+            const select = document.getElementById('pet-select');
+            // 檢查是否已經有 "new_temp" 選項，避免重複加
+            if (!select.querySelector('option[value="new_temp"]')) {
+                 let option = document.createElement('option');
+                 option.value = "new_temp";
+                 option.text = "➕ 正在新增寵物...";
+                 option.selected = true;
+                 select.appendChild(option);
+            }
+            select.value = "new_temp";
+
+            resetForm();
+            updateModeLabel(true); // 顯示為新增模式
+            // 可選擇性跳出提示
+            // alert('已切換至「新增模式」，請輸入新寵物資料。');
+        }
+
+        // 3. 選擇既有寵物 (下拉選單觸發)
         function onPetSelectChange() {
             const petId = document.getElementById('pet-select').value;
-            if (petId === 'new') {
-                resetForm();
-            } else {
+            // 排除 "new_temp" 或空值
+            if (petId && petId !== "new_temp") {
                 loadPetDetail(petId);
+                updateModeLabel(false);
+            } else if (petId === "new_temp") {
+                switchToNewPetMode();
+            }
+        }
+
+        function updateModeLabel(isNew) {
+            const labelDiv = document.getElementById('mode-label');
+            const textSpan = document.getElementById('current-mode-text');
+            labelDiv.style.display = 'block';
+            if (isNew) {
+                textSpan.innerText = '新增模式';
+                textSpan.style.color = '#ff9800';
+                document.getElementById('btn-save').innerText = '確認新增';
+            } else {
+                textSpan.innerText = '維護模式';
+                textSpan.style.color = '#06c755';
+                document.getElementById('btn-save').innerText = '儲存修改';
             }
         }
 
@@ -228,7 +318,7 @@
                         document.getElementById('p_name').value = d.basic.p_name;
                         document.getElementById('p_type').value = d.basic.p_type;
                         document.getElementById('p_sex').value = d.basic.p_sex;
-                        document.getElementById('p_weight').value = d.basic.p_weight; // 回填體重
+                        document.getElementById('p_weight').value = d.basic.p_weight; 
                         document.getElementById('p_breeds').value = d.basic.p_breeds;
                         document.getElementById('p_birthday').value = d.basic.p_birthday;
                         document.getElementById('p_ic').value = d.basic.p_ic;
@@ -259,13 +349,16 @@
                         document.getElementById('pw_bwa').value = d.wariness.pw_bwa;
                         document.getElementById('pw_other').value = d.wariness.pw_other;
                     }
+                    
+                    // 切換回基本資料分頁，讓使用者看到資料變了
+                    switchTab('basic');
                 }
             });
         }
 
         function resetForm() {
-            document.getElementById('current_p_id').value = '';
-            document.querySelectorAll('input[type=text], input[type=date], input[type=number], textarea').forEach(el => el.value = ''); // 增加 input[type=number]
+            document.getElementById('current_p_id').value = ''; // 清空 ID
+            document.querySelectorAll('input[type=text], input[type=date], input[type=number], textarea').forEach(el => el.value = '');
             document.querySelectorAll('input[type=checkbox]').forEach(el => {
                 el.checked = false;
                 el.disabled = false;
@@ -315,10 +408,7 @@
             params += `&p_name=${encodeURIComponent(name)}`;
             params += `&p_type=${document.getElementById('p_type').value}`;
             params += `&p_sex=${document.getElementById('p_sex').value}`;
-            
-            // 加入體重參數
             params += `&p_weight=${encodeURIComponent(document.getElementById('p_weight').value)}`;
-            
             params += `&p_breeds=${encodeURIComponent(document.getElementById('p_breeds').value)}`;
             params += `&p_birthday=${document.getElementById('p_birthday').value}`;
             params += `&p_ic=${encodeURIComponent(document.getElementById('p_ic').value)}`;
