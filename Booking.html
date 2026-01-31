@@ -9,20 +9,16 @@
         body { font-family: -apple-system, sans-serif; background-color: #fce4ec; padding: 20px; }
         .container { background: white; max-width: 500px; margin: 0 auto; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         h3 { text-align: center; color: #d81b60; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; text-align: left; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        .form-control, .form-select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; appearance: none; min-height: 44px; }
-        .form-select { background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23d81b60%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right .7em top 50%; background-size: .65em auto; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-control, .form-select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; min-height: 44px; }
         .btn { width: 100%; padding: 12px; background-color: #d81b60; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         .btn:disabled { background-color: #f48fb1; }
-        #loading-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 999; flex-direction: column; }
+        #loading-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 999; }
     </style>
 </head>
 <body>
-    <div id="loading-mask">
-        <div style="font-weight:bold; font-size:18px;">資料讀取中...</div>
-        <div id="debug-msg" style="font-size:12px; color:#666; margin-top:10px;">初始化...</div>
-    </div>
+    <div id="loading-mask"><b>讀取中...</b></div>
 
     <div class="container">
         <h3>🛁 預約美容 / 住宿</h3>
@@ -35,17 +31,17 @@
         <div class="form-group">
             <label>服務項目</label>
             <select id="r_service" class="form-select">
-                <option value="洗澡">🛁 洗澡 (Bath)</option>
-                <option value="大美容">✂️ 大美容 (Full Grooming)</option>
-                <option value="住宿">🏠 住宿 (Hotel)</option>
-                <option value="安親">🧸 安親 (Day Care)</option>
+                <option value="洗澡">🛁 洗澡</option>
+                <option value="大美容">✂️ 大美容</option>
+                <option value="住宿">🏠 住宿</option>
+                <option value="安親">🧸 安親</option>
             </select>
         </div>
         <button id="btn-submit" class="btn" onclick="submitReservation()">送出預約</button>
     </div>
 
     <script>
-        const MY_LIFF_ID = '2008965576-OEL8Wsmc'; 
+        const MY_LIFF_ID = '2008965576-txfwY86y'; 
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
         let currentUserId = '';
 
@@ -62,7 +58,7 @@
                         loadUserPets();
                     });
                 }
-            }).catch(err => { alert('LIFF 初始化失敗: ' + err); });
+            }).catch(err => { console.error(err); });
         };
 
         function loadUserPets() {
@@ -80,14 +76,8 @@
                         select.appendChild(option);
                     });
                 } else {
-                    let option = document.createElement('option');
-                    option.text = "無寵物資料";
-                    select.appendChild(option);
+                    select.innerHTML = '<option value="">無寵物資料</option>';
                 }
-            })
-            .catch(err => {
-                document.getElementById('loading-mask').style.display = 'none';
-                alert('讀取失敗！');
             });
         }
 
@@ -99,43 +89,29 @@
             const time = document.getElementById('r_time').value;
             const service = document.getElementById('r_service').value;
 
-            if (!p_id) { alert('請選擇寵物'); return; }
-            if (!date) { alert('請選擇日期'); return; }
-            if (!time) { alert('請選擇時間'); return; }
+            if (!p_id || !date || !time) { alert('請完整填寫預約資訊'); return; }
 
             const btn = document.getElementById('btn-submit');
             btn.disabled = true;
             btn.innerText = '處理中...';
 
-            const params = `?action=reservation_save` +
-                           `&u_id=${encodeURIComponent(currentUserId)}` +
-                           `&p_id=${encodeURIComponent(p_id)}` +
-                           `&date=${encodeURIComponent(date)}` +
-                           `&time=${encodeURIComponent(time)}` +
-                           `&service=${encodeURIComponent(service)}`;
+            const params = `?action=reservation_save&u_id=${encodeURIComponent(currentUserId)}&p_id=${encodeURIComponent(p_id)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&service=${encodeURIComponent(service)}`;
 
             fetch(GAS_URL + params)
             .then(res => res.json())
             .then(result => {
                 if (result.status === 'success') {
-                    // 🚀 關鍵修改：發送 LINE 訊息通知使用者
+                    // 🚀 關鍵：使用者發送 LINE 確認訊息
                     if (liff.isInClient()) {
                         liff.sendMessages([
                             {
                                 "type": "text",
-                                "text": "✅ 預約申請已送出！\n" +
-                                        "------------------\n" +
-                                        "🐶 寵物名稱：" + p_name + "\n" +
-                                        "📅 預約日期：" + date + "\n" +
-                                        "⏰ 預約時間：" + time + "\n" +
-                                        "🛀 服務項目：" + service + "\n" +
-                                        "✨ 預約單號：" + result.r_id + "\n\n" +
-                                        "請盡快為我安排，謝謝！"
+                                "text": "✅ 預約申請已送出！\n------------------\n🐶 寵物名稱：" + p_name + "\n📅 預約日期：" + date + "\n⏰ 預約時間：" + time + "\n🛀 服務項目：" + service + "\n✨ 預約單號：" + result.r_id + "\n\n感謝預約，請耐心等候確認。"
                             }
                         ]).then(() => {
                             alert('預約成功！單號：' + result.r_id);
-                            liff.closeWindow(); // 傳送完畢後關閉 LIFF
-                        }).catch((err) => {
+                            liff.closeWindow();
+                        }).catch(err => {
                             alert('預約成功，但通知訊息發送失敗。');
                             liff.closeWindow();
                         });
@@ -145,12 +121,7 @@
                 } else {
                     alert('預約失敗: ' + result.message);
                     btn.disabled = false;
-                    btn.innerText = '送出預約';
                 }
-            })
-            .catch(err => {
-                alert('連線錯誤: ' + err);
-                btn.disabled = false;
             });
         }
     </script>
