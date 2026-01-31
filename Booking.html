@@ -11,7 +11,7 @@
         .container { background: white; max-width: 500px; margin: 0 auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         h3 { text-align: center; color: #d81b60; margin-bottom: 25px; font-size: 22px; }
         
-        /* 核心表單群組樣式 */
+        /* 表單群組 */
         .form-group { margin-bottom: 20px; text-align: left; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; font-size: 14px; }
         
@@ -27,26 +27,24 @@
             background-color: #fff;
             color: #333;
             outline: none;
-            -webkit-appearance: none; /* 移除 iOS 預設立體樣式 */
+            -webkit-appearance: none; 
             appearance: none;
             display: block;
-            line-height: 48px; /* 讓文字垂直置中 */
+            line-height: 48px; 
         }
 
-        /* 針對 Date 與 Time 的特殊處理：移除預設圖示/箭頭 */
+        /* 隱藏日期/時間的預設圖示 */
         input[type="date"]::-webkit-calendar-picker-indicator,
         input[type="time"]::-webkit-calendar-picker-indicator {
-            display: none !important; /* 核心語法：隱藏小箭頭/日曆圖示 */
+            display: none !important; 
             -webkit-appearance: none;
         }
         
-        /* 確保日期時間輸入框在 iOS 上背景也是白色且無預設樣式 */
         input[type="date"], input[type="time"] {
             background-image: none;
-            background-attachment: fixed;
         }
 
-        /* 針對 Select 下拉選單：保留我們自定義的粉色箭頭 */
+        /* 自定義下拉箭頭 (Select) */
         .form-select {
             background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23d81b60%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat;
@@ -60,7 +58,6 @@
             box-shadow: 0 0 0 2px rgba(216, 27, 96, 0.1);
         }
 
-        /* 按鈕樣式 */
         .btn { 
             width: 100%; 
             padding: 14px; 
@@ -77,7 +74,6 @@
         .btn:active { background-color: #ad1457; }
         .btn:disabled { background-color: #f48fb1; cursor: not-allowed; }
 
-        /* 遮罩樣式 */
         #loading-mask { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(255,255,255,0.95); 
@@ -97,6 +93,13 @@
         <div class="form-group">
             <label>選擇寵物</label>
             <select id="pet_select" class="form-select">
+                <option value="">讀取中...</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>指定美容師</label>
+            <select id="beautician_select" class="form-select">
                 <option value="">讀取中...</option>
             </select>
         </div>
@@ -130,13 +133,16 @@
         let currentUserId = '';
 
         window.onload = function() {
-            // 限制日期為明天以後
+            // 初始化日期 (限制明天)
             const dateInput = document.getElementById('r_date');
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             const minDate = tomorrow.toISOString().split('T')[0];
             dateInput.min = minDate;
             dateInput.value = minDate;
+
+            // 🚀 頁面載入時，直接讀取美容師清單
+            loadBeauticians();
 
             liff.init({ liffId: MY_LIFF_ID }).then(() => {
                 if (!liff.isLoggedIn()) {
@@ -149,6 +155,29 @@
                 }
             }).catch(err => { console.error('LIFF Init Error', err); });
         };
+
+        // 🚀 讀取美容師清單 (呈現 B_Name, 值為 B_ID)
+        function loadBeauticians() {
+            fetch(GAS_URL + `?action=beautician_query_list`)
+            .then(res => res.json())
+            .then(result => {
+                const select = document.getElementById('beautician_select');
+                select.innerHTML = ''; 
+                // 加入預設選項
+                select.add(new Option("不指定 (Any)", ""));
+
+                if (result.status === 'success' && result.data.length > 0) {
+                    result.data.forEach(b => {
+                        let option = new Option(b.b_name, b.b_id);
+                        select.add(option);
+                    });
+                }
+            })
+            .catch(err => {
+                console.error("美容師讀取失敗", err);
+                document.getElementById('beautician_select').innerHTML = '<option value="">讀取失敗</option>';
+            });
+        }
 
         function loadUserPets() {
             fetch(GAS_URL + `?action=pet_query_list&u_id=${encodeURIComponent(currentUserId)}`)
@@ -176,6 +205,12 @@
             const petSelect = document.getElementById('pet_select');
             const p_id = petSelect.value;
             const p_name = petSelect.options[petSelect.selectedIndex].text;
+            
+            // 🚀 取得選取的美容師
+            const bSelect = document.getElementById('beautician_select');
+            const b_id = bSelect.value;
+            const b_name = bSelect.options[bSelect.selectedIndex].text;
+
             const date = document.getElementById('r_date').value;
             const time = document.getElementById('r_time').value;
             const service = document.getElementById('r_service').value;
@@ -184,10 +219,9 @@
             if (!date) { alert('請選擇日期'); return; }
             if (!time) { alert('請選擇時間'); return; }
 
-            // 前端營業時間基本檢查 (建議值，實際以試算表為主)
+            // 前端簡易時間卡控 (建議與試算表設定一致)
             const [h, m] = time.split(':').map(Number);
             const totalMins = h * 60 + m;
-            // 假設 09:30 (570) ~ 21:00 (1260)
             if (totalMins < 570 || totalMins > 1260) {
                 alert('預約失敗：營業時間為 09:30 至 21:00');
                 return;
@@ -197,9 +231,11 @@
             btn.disabled = true;
             btn.innerText = '處理中...';
 
+            // 🚀 參數加入 b_id
             const params = `?action=reservation_save` +
                            `&u_id=${encodeURIComponent(currentUserId)}` +
                            `&p_id=${encodeURIComponent(p_id)}` +
+                           `&b_id=${encodeURIComponent(b_id)}` +
                            `&date=${encodeURIComponent(date)}` +
                            `&time=${encodeURIComponent(time)}` +
                            `&service=${encodeURIComponent(service)}`;
@@ -209,18 +245,19 @@
             .then(result => {
                 if (result.status === 'success') {
                     if (liff.isInClient()) {
-                        liff.sendMessages([{
-                            "type": "text",
-                            "text": "✅ 預約申請已送出！\n" +
-                                    "------------------\n" +
-                                    "🐶 寵物名稱：" + p_name + "\n" +
-                                    "📅 預約日期：" + date + "\n" +
-                                    "⏰ 預約時間：" + time + "\n" +
-                                    "🛀 服務項目：" + service + "\n" +
-                                    "✨ 預約單號：" + result.r_id
-                        }]).then(() => {
-                            liff.closeWindow();
-                        }).catch(() => {
+                        // 訊息內容加入美容師
+                        let msg = "✅ 預約申請已送出！\n" +
+                                  "------------------\n" +
+                                  "🐶 寵物名稱：" + p_name + "\n" +
+                                  "📅 預約日期：" + date + "\n" +
+                                  "⏰ 預約時間：" + time + "\n" +
+                                  "💇 指定美容師：" + b_name + "\n" + 
+                                  "🛀 服務項目：" + service + "\n" +
+                                  "✨ 預約單號：" + result.r_id;
+
+                        liff.sendMessages([{ "type": "text", "text": msg }])
+                        .then(() => { liff.closeWindow(); })
+                        .catch(() => {
                             alert('預約成功，單號：' + result.r_id);
                             liff.closeWindow();
                         });
