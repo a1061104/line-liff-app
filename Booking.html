@@ -6,7 +6,7 @@
     <title>美容預約</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        /* 樣式保持不變 */
+        /* 統一基礎樣式 */
         body { font-family: -apple-system, "Helvetica Neue", sans-serif; background-color: #fce4ec; padding: 20px; color: #333; }
         .container { background: white; max-width: 500px; margin: 0 auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         h3 { text-align: center; color: #d81b60; margin-bottom: 25px; font-size: 22px; }
@@ -21,6 +21,7 @@
             -webkit-appearance: none; appearance: none; display: block; line-height: 48px; 
         }
 
+        /* 隱藏預設圖示 */
         input[type="date"]::-webkit-calendar-picker-indicator,
         input[type="time"]::-webkit-calendar-picker-indicator { display: none !important; -webkit-appearance: none; }
         input[type="date"], input[type="time"] { background-image: none; }
@@ -62,7 +63,7 @@
         </div>
 
         <div class="form-group">
-            <label>預約時間 (請依營業時間填寫)</label>
+            <label>預約時間 <span id="time-hint" style="font-weight:normal; font-size:0.95em; color:#d81b60;">(請依營業時間填寫)</span></label>
             <input type="time" id="r_time" class="form-control">
         </div>
 
@@ -84,15 +85,25 @@
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
         let currentUserId = '';
 
-        window.onload = function() {
-            const dateInput = document.getElementById('r_date');
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const minDate = tomorrow.toISOString().split('T')[0];
-            dateInput.min = minDate;
-            dateInput.value = minDate;
+        // 全域變數：儲存動態抓到的營業時間 (預設值僅供參考)
+        let g_openTime = "09:00"; 
+        let g_closeTime = "21:00";
 
-            // 載入美容師
+        window.onload = function() {
+            // 修正日期預設為明天 (當地時間)
+            const dateInput = document.getElementById('r_date');
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const year = tomorrow.getFullYear();
+            const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+            const day = String(tomorrow.getDate()).padStart(2, '0');
+            dateInput.min = `${year}-${month}-${day}`;
+            dateInput.value = dateInput.min;
+
+            // 🚀 啟動時：載入設定、載入美容師
+            loadSettings();     
             loadBeauticians();
 
             liff.init({ liffId: MY_LIFF_ID }).then(() => {
@@ -101,7 +112,24 @@
             }).catch(err => { console.error('LIFF Init Error', err); });
         };
 
-        // 🚀 修正點：呼叫 action 改為 'reservation_beautician_list'
+        // 🚀 1. 抓取營業時間設定
+        function loadSettings() {
+            fetch(GAS_URL + `?action=reservation_get_settings`)
+            .then(res => res.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    const config = result.data;
+                    g_openTime = config.OPEN_HOUR;   // 例如 "09:30"
+                    g_closeTime = config.CLOSE_HOUR; // 例如 "21:00"
+                    
+                    // 更新畫面上顯示的文字
+                    document.getElementById('time-hint').innerText = `(請依營業時間填寫 ${g_openTime}~${g_closeTime})`;
+                }
+            })
+            .catch(err => console.error("讀取設定失敗", err));
+        }
+
+        // 🚀 2. 抓取美容師清單
         function loadBeauticians() {
             fetch(GAS_URL + `?action=reservation_beautician_list`)
             .then(res => res.json())
@@ -112,13 +140,11 @@
 
                 if (result.status === 'success' && result.data.length > 0) {
                     result.data.forEach(b => {
-                        let option = new Option(b.b_name, b.b_id);
-                        select.add(option);
+                        select.add(new Option(b.b_name, b.b_id));
                     });
                 }
             })
             .catch(err => {
-                console.error("美容師讀取失敗", err);
                 document.getElementById('beautician_select').innerHTML = '<option value="">載入失敗</option>';
             });
         }
@@ -132,8 +158,7 @@
                 select.innerHTML = '';
                 if (result.status === 'success' && result.data.length > 0) {
                     result.data.forEach(pet => {
-                        let option = new Option(pet.p_name, pet.p_id);
-                        select.add(option);
+                        select.add(new Option(pet.p_name, pet.p_id));
                     });
                 } else {
                     select.add(new Option("無寵物資料", ""));
@@ -162,10 +187,18 @@
             if (!date) { alert('請選擇日期'); return; }
             if (!time) { alert('請選擇時間'); return; }
 
+            // 🚀 3. 使用動態抓取的時間進行前端卡控
             const [h, m] = time.split(':').map(Number);
-            const totalMins = h * 60 + m;
-            if (totalMins < 570 || totalMins > 1260) {
-                alert('預約失敗：營業時間為 09:30 至 21:00');
+            const userTotalMins = h * 60 + m;
+
+            const [openH, openM] = g_openTime.split(':').map(Number);
+            const openTotalMins = openH * 60 + openM;
+
+            const [closeH, closeM] = g_closeTime.split(':').map(Number);
+            const closeTotalMins = closeH * 60 + closeM;
+
+            if (userTotalMins < openTotalMins || userTotalMins > closeTotalMins) {
+                alert(`預約失敗：營業時間為 ${g_openTime} 至 ${g_closeTime}`);
                 return;
             }
 
