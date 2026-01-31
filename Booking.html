@@ -49,11 +49,6 @@
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
         let currentUserId = '';
 
-        function updateDebug(msg) {
-            document.getElementById('debug-msg').innerText = msg;
-            console.log(msg);
-        }
-
         window.onload = function() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('r_date').min = today;
@@ -123,7 +118,7 @@
             .then(res => res.json())
             .then(result => {
                 if (result.status === 'success') {
-                    // --- 🚀 關鍵新增：發送預約成功的 LINE 訊息 (免費) ---
+                    // 🚀 關鍵修改：發送 LINE 訊息通知使用者
                     if (liff.isInClient()) {
                         liff.sendMessages([
                             {
@@ -135,13 +130,13 @@
                                         "⏰ 預約時間：" + time + "\n" +
                                         "🛀 服務項目：" + service + "\n" +
                                         "✨ 預約單號：" + result.r_id + "\n\n" +
-                                        "我們將盡快為您確認，謝謝！"
+                                        "請盡快為我安排，謝謝！"
                             }
                         ]).then(() => {
                             alert('預約成功！單號：' + result.r_id);
-                            liff.closeWindow();
+                            liff.closeWindow(); // 傳送完畢後關閉 LIFF
                         }).catch((err) => {
-                            alert('預約已送出，但訊息發送失敗。');
+                            alert('預約成功，但通知訊息發送失敗。');
                             liff.closeWindow();
                         });
                     } else {
