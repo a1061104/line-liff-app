@@ -6,20 +6,80 @@
     <title>美容預約</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; background-color: #fce4ec; padding: 20px; }
-        .container { background: white; max-width: 500px; margin: 0 auto; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h3 { text-align: center; color: #d81b60; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; text-align: left; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        .form-control, .form-select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; min-height: 44px; }
-        .btn { width: 100%; padding: 12px; background-color: #d81b60; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .btn:disabled { background-color: #f48fb1; }
-        #loading-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 999; flex-direction: column; }
+        /* 統一基礎樣式 */
+        body { font-family: -apple-system, "Helvetica Neue", sans-serif; background-color: #fce4ec; padding: 20px; color: #333; }
+        .container { background: white; max-width: 500px; margin: 0 auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h3 { text-align: center; color: #d81b60; margin-bottom: 25px; font-size: 22px; }
+        
+        /* 核心表單群組樣式 */
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; font-size: 14px; }
+        
+        /* 強制所有輸入元件樣式一致 */
+        .form-control, .form-select { 
+            width: 100%; 
+            height: 48px; /* 統一高度 */
+            padding: 10px 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            background-color: #fff;
+            color: #333;
+            outline: none;
+            -webkit-appearance: none; /* 移除 iOS 預設樣式 */
+            appearance: none;
+            display: block;
+        }
+
+        /* 針對 Date 與 Time 特別處理，確保縮進一致 */
+        input[type="date"], input[type="time"] {
+            font-family: inherit;
+        }
+
+        /* 針對 Select 下拉選單添加自定義箭頭 */
+        .form-select {
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23d81b60%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px top 50%;
+            background-size: 12px auto;
+            padding-right: 30px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #d81b60;
+            box-shadow: 0 0 0 2px rgba(216, 27, 96, 0.1);
+        }
+
+        /* 按鈕樣式 */
+        .btn { 
+            width: 100%; 
+            padding: 14px; 
+            background-color: #d81b60; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 18px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+        .btn:active { background-color: #ad1457; }
+        .btn:disabled { background-color: #f48fb1; cursor: not-allowed; }
+
+        /* 遮罩樣式 */
+        #loading-mask { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255,255,255,0.9); 
+            display: flex; justify-content: center; align-items: center; 
+            z-index: 999; flex-direction: column; 
+        }
     </style>
 </head>
 <body>
     <div id="loading-mask">
-        <div style="font-weight:bold; font-size:18px;">資料讀取中...</div>
+        <div style="font-weight:bold; font-size:18px; color:#d81b60;">資料讀取中...</div>
     </div>
 
     <div class="container">
@@ -33,12 +93,12 @@
         </div>
 
         <div class="form-group">
-            <label>預約日期 (僅開放明天以後)</label>
+            <label>預約日期</label>
             <input type="date" id="r_date" class="form-control">
         </div>
 
         <div class="form-group">
-            <label>預約時間 (請依營業時間填寫)</label>
+            <label>預約時間</label>
             <input type="time" id="r_time" class="form-control">
         </div>
 
@@ -56,21 +116,19 @@
     </div>
 
     <script>
-        // 請確保此處的 LIFF ID 與 GAS URL 正確
         const MY_LIFF_ID = '2008965576-OEL8Wsmc'; 
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
         let currentUserId = '';
 
         window.onload = function() {
-            // 🚀 功能 1：設定日期卡控 - 不可預約當日，最小值設為明天
+            // 限制日期為明天以後
             const dateInput = document.getElementById('r_date');
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             const minDate = tomorrow.toISOString().split('T')[0];
             dateInput.min = minDate;
-            dateInput.value = minDate; // 預設為明天
+            dateInput.value = minDate;
 
-            // 初始化 LIFF
             liff.init({ liffId: MY_LIFF_ID }).then(() => {
                 if (!liff.isLoggedIn()) {
                     liff.login();
@@ -80,10 +138,9 @@
                         loadUserPets();
                     });
                 }
-            }).catch(err => { alert('LIFF 初始化失敗'); });
+            }).catch(err => { console.error('LIFF Init Error', err); });
         };
 
-        // 讀取該使用者的寵物列表
         function loadUserPets() {
             fetch(GAS_URL + `?action=pet_query_list&u_id=${encodeURIComponent(currentUserId)}`)
             .then(res => res.json())
@@ -93,24 +150,19 @@
                 select.innerHTML = '';
                 if (result.status === 'success' && result.data.length > 0) {
                     result.data.forEach(pet => {
-                        let option = document.createElement('option');
-                        option.value = pet.p_id;
-                        option.text = pet.p_name;
-                        select.appendChild(option);
+                        let option = new Option(pet.p_name, pet.p_id);
+                        select.add(option);
                     });
                 } else {
-                    let option = document.createElement('option');
-                    option.text = "無寵物資料";
-                    select.appendChild(option);
+                    select.add(new Option("無寵物資料", ""));
                 }
             })
             .catch(err => {
                 document.getElementById('loading-mask').style.display = 'none';
-                alert('讀取寵物資料失敗！');
+                alert('讀取失敗');
             });
         }
 
-        // 送出預約邏輯
         function submitReservation() {
             const petSelect = document.getElementById('pet_select');
             const p_id = petSelect.value;
@@ -119,71 +171,41 @@
             const time = document.getElementById('r_time').value;
             const service = document.getElementById('r_service').value;
 
-            // 基礎檢查
-            if (!p_id || p_id === "無寵物資料") { alert('請選擇寵物'); return; }
+            if (!p_id) { alert('請選擇寵物'); return; }
             if (!date) { alert('請選擇日期'); return; }
             if (!time) { alert('請選擇時間'); return; }
-
-            // 🚀 功能 2：前端時間範圍檢查 (此處建議與 Par_Setting 手動同步顯示 alert)
-            // 假設 Sheet 設定為 09:30 ~ 21:00，以下為檢查邏輯
-            const [h, m] = time.split(':').map(Number);
-            const totalMins = h * 60 + m;
-            const openLimit = 9 * 60 + 30; // 09:30
-            const closeLimit = 21 * 60;    // 21:00
-
-            if (totalMins < openLimit || totalMins > closeLimit) {
-                alert('預約失敗：營業時間為 09:30 至 21:00');
-                return;
-            }
 
             const btn = document.getElementById('btn-submit');
             btn.disabled = true;
             btn.innerText = '處理中...';
 
-            const params = `?action=reservation_save` +
-                           `&u_id=${encodeURIComponent(currentUserId)}` +
-                           `&p_id=${encodeURIComponent(p_id)}` +
-                           `&date=${encodeURIComponent(date)}` +
-                           `&time=${encodeURIComponent(time)}` +
-                           `&service=${encodeURIComponent(service)}`;
+            const params = `?action=reservation_save&u_id=${encodeURIComponent(currentUserId)}&p_id=${encodeURIComponent(p_id)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&service=${encodeURIComponent(service)}`;
 
             fetch(GAS_URL + params)
             .then(res => res.json())
             .then(result => {
                 if (result.status === 'success') {
-                    // 發送 LINE 訊息通知使用者
                     if (liff.isInClient()) {
-                        liff.sendMessages([
-                            {
-                                "type": "text",
-                                "text": "✅ 預約申請已送出！\n" +
-                                        "------------------\n" +
-                                        "🐶 寵物名稱：" + p_name + "\n" +
-                                        "📅 預約日期：" + date + "\n" +
-                                        "⏰ 預約時間：" + time + "\n" +
-                                        "🛀 服務項目：" + service + "\n" +
-                                        "✨ 預約單號：" + result.r_id + "\n\n" +
-                                        "我們將盡快為您確認，謝謝！"
-                            }
-                        ]).then(() => {
-                            alert('預約成功！單號：' + result.r_id);
-                            liff.closeWindow(); // 成功後關閉視窗
-                        }).catch((err) => {
-                            alert('預約已送出，但訊息發送失敗。');
+                        liff.sendMessages([{
+                            "type": "text",
+                            "text": "✅ 預約申請已送出！\n🐶 寵物：" + p_name + "\n📅 日期：" + date + "\n⏰ 時間：" + time + "\n🛀 項目：" + service + "\n✨ 單號：" + result.r_id
+                        }]).then(() => {
+                            liff.closeWindow();
+                        }).catch(() => {
+                            alert('預約成功，單號：' + result.r_id);
                             liff.closeWindow();
                         });
                     } else {
                         alert('預約成功！單號：' + result.r_id);
                     }
                 } else {
-                    // 若後端拋出卡控錯誤（如營業時間不符），會顯示在此
                     alert(result.message);
                     btn.disabled = false;
                     btn.innerText = '送出預約';
                 }
             })
             .catch(err => {
-                alert('連線錯誤: ' + err);
+                alert('連線錯誤');
                 btn.disabled = false;
                 btn.innerText = '送出預約';
             });
