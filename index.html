@@ -9,137 +9,34 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        /* 整體版面設定 */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f5f5f5;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
+        body { font-family: -apple-system, sans-serif; background-color: #f5f5f5; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; }
+        h2 { color: #333; margin-bottom: 20px; text-align: center; line-height: 1.4; }
 
-        h2 {
-            color: #333;
-            margin-bottom: 20px; /*稍微縮小間距給QR Code*/
-            text-align: center;
-            line-height: 1.4;
-        }
-
-        /* --- 新增：QR Code 顯示區塊樣式 --- */
+        /* QR Code 區塊 */
         .qr-container {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            text-align: center;
-            width: 100%;
-            max-width: 300px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 200px; /* 固定高度避免畫面跳動 */
-            justify-content: center;
+            background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; text-align: center; width: 100%; max-width: 300px;
+            display: flex; flex-direction: column; align-items: center; min-height: 200px; justify-content: center;
         }
+        #qrcode { margin-top: 10px; margin-bottom: 10px; }
         
-        #qrcode {
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
+        .user-name-title { font-weight: bold; font-size: 18px; color: #06c755; margin-bottom: 5px; }
+        
+        /* 讀取與錯誤訊息樣式 */
+        #loading-msg { color: #666; font-size: 14px; padding: 10px; }
+        .error-text { color: red !important; font-weight: bold; word-break: break-all; }
 
-        .user-id-text {
-            font-size: 14px;
-            color: #555;
-            margin-top: 5px;
-            font-family: monospace;
-            background: #eee;
-            padding: 2px 8px;
-            border-radius: 4px;
-        }
-
-        .user-name-title {
-            font-weight: bold;
-            font-size: 18px;
-            color: #06c755;
-            margin-bottom: 5px;
-        }
-
-        #loading-msg { color: #888; font-size: 14px; }
-        /* ---------------------------------- */
-
-        /* 選單容器 */
-        .menu-container {
-            width: 100%;
-            max-width: 400px;
-            display: grid;
-            gap: 20px;
-        }
-
-        /* 按鈕樣式 */
-        .menu-btn {
-            background-color: white;
-            border: none;
-            border-radius: 15px;
-            padding: 25px 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            text-decoration: none; /* 移除超連結底線 */
-            color: #333;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* 按下效果 */
-        .menu-btn:active {
-            transform: scale(0.98);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        /* 圖示區域 */
-        .icon {
-            font-size: 40px;
-            margin-right: 20px;
-            width: 50px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-
-        /* 文字區域 */
-        .text-content {
-            text-align: left;
-        }
-
-        .title {
-            font-size: 18px;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .desc {
-            font-size: 14px;
-            color: #888;
-        }
-
-        /* 個別按鈕顏色條裝飾 */
+        /* 選單與按鈕 */
+        .menu-container { width: 100%; max-width: 400px; display: grid; gap: 20px; }
+        .menu-btn { background-color: white; border: none; border-radius: 15px; padding: 25px 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; display: flex; align-items: center; justify-content: flex-start; text-decoration: none; color: #333; }
+        .menu-btn:active { transform: scale(0.98); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .icon { font-size: 40px; margin-right: 20px; width: 50px; text-align: center; flex-shrink: 0; }
+        .text-content { text-align: left; }
+        .title { font-size: 18px; font-weight: bold; display: block; margin-bottom: 5px; }
+        .desc { font-size: 14px; color: #888; }
         .btn-customer { border-left: 6px solid #06c755; }
         .btn-pet { border-left: 6px solid #ff9f43; }
 
-        /* 頁尾 */
-        footer {
-            margin-top: auto;
-            color: #aaa;
-            font-size: 12px;
-            padding-top: 20px;
-            text-align: center;
-        }
+        footer { margin-top: auto; color: #aaa; font-size: 12px; padding-top: 20px; text-align: center; }
     </style>
 </head>
 <body>
@@ -151,13 +48,11 @@
         <div id="user-info" style="display:none;">
             <div class="user-name-title" id="display-name"></div>
             <div id="qrcode"></div>
-            <div class="user-id-text" id="display-uid"></div>
             <div style="font-size:12px; color:#999; margin-top:5px;">請出示此碼以進行報到</div>
         </div>
     </div>
 
     <div class="menu-container">
-        
         <a href="Customer.html" class="menu-btn btn-customer">
             <div class="icon">🙍‍♂️</div>
             <div class="text-content">
@@ -173,18 +68,20 @@
                 <span class="desc">建立寵物病歷與注意事項</span>
             </div>
         </a>
-
     </div>
 
     <footer>&copy; 2026 排骨酥寵物美容</footer>
 
     <script>
-        // ⚠️ 請確認您的 LIFF ID
         const MY_LIFF_ID = '2008965576-txfwY86y'; 
-        // ⚠️ 請確認您的 GAS 網址 (僅用於背景檢查資料，不影響按鈕跳轉)
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
 
         window.onload = function() {
+            // 檢查 QR Code 函式庫是否載入成功
+            if (typeof QRCode === 'undefined') {
+                document.getElementById('loading-msg').innerHTML = '<span class="error-text">錯誤：QR Code 程式庫未載入，請檢查網路。</span>';
+                return;
+            }
             initializeLiff();
         };
 
@@ -195,36 +92,28 @@
                         liff.login();
                     } else {
                         liff.getProfile().then(profile => {
-                            const userId = profile.userId;
-                            const displayName = profile.displayName;
-                            
-                            // 呼叫後端 API 進行檢查或自動建檔
-                            checkAndCreateUser(userId, displayName);
+                            checkAndCreateUser(profile.userId, profile.displayName);
                         }).catch(err => {
-                            console.error('LIFF Profile Error', err);
-                            document.getElementById('loading-msg').innerText = '讀取失敗，請重新整理';
+                            document.getElementById('loading-msg').innerHTML = '<span class="error-text">讀取個人資料失敗：' + err + '</span>';
                         });
                     }
                 })
                 .catch(err => {
-                    console.error('LIFF Init Error', err);
-                    document.getElementById('loading-msg').innerText = 'LIFF 初始化失敗';
+                    document.getElementById('loading-msg').innerHTML = '<span class="error-text">LIFF 初始化失敗，請確認 ID 是否正確。<br>' + err + '</span>';
                 });
         }
 
         function checkAndCreateUser(userId, displayName) {
-            // 呼叫 GAS 後端 API
             const url = `${GAS_URL}?action=user_login_check&u_id=${encodeURIComponent(userId)}&u_name=${encodeURIComponent(displayName)}`;
             
             fetch(url)
                 .then(res => res.json())
                 .then(result => {
-                    // 成功後顯示 QR Code
                     showQrCode(userId, displayName);
                 })
                 .catch(err => {
                     console.error('API Error', err);
-                    // 即使連線失敗，為了現場運作，仍先顯示 QR Code
+                    // 即使連線失敗，仍顯示 QR Code (可能是網路問題或 GAS 權限問題)
                     showQrCode(userId, displayName); 
                 });
         }
@@ -236,10 +125,9 @@
             document.getElementById('user-info').style.alignItems = 'center';
 
             document.getElementById('display-name').innerText = displayName;
-            document.getElementById('display-uid').innerText = userId;
-
-            document.getElementById('qrcode').innerHTML = '';
+            // 已移除顯示 U_ID 的程式碼
             
+            document.getElementById('qrcode').innerHTML = '';
             new QRCode(document.getElementById("qrcode"), {
                 text: userId,
                 width: 150,
@@ -250,6 +138,5 @@
             });
         }
     </script>
-
 </body>
 </html>
