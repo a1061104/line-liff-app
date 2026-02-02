@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>排骨酥寵物美容管理系統</title>
+    
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
@@ -22,12 +23,12 @@
 
         h2 {
             color: #333;
-            margin-bottom: 20px;
+            margin-bottom: 20px; /*稍微縮小間距給QR Code*/
             text-align: center;
             line-height: 1.4;
         }
 
-        /* --- 新增：QR Code 區域樣式 --- */
+        /* --- 新增：QR Code 顯示區塊樣式 --- */
         .qr-container {
             background: white;
             padding: 20px;
@@ -40,7 +41,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 200px;
+            min-height: 200px; /* 固定高度避免畫面跳動 */
             justify-content: center;
         }
         
@@ -67,7 +68,7 @@
         }
 
         #loading-msg { color: #888; font-size: 14px; }
-        /* --------------------------- */
+        /* ---------------------------------- */
 
         /* 選單容器 */
         .menu-container {
@@ -180,7 +181,7 @@
     <script>
         // ⚠️ 請確認您的 LIFF ID
         const MY_LIFF_ID = '2008965576-txfwY86y'; 
-        // ⚠️ 請確認您的 GAS 網址 (用於背景資料庫檢查，不影響頁面跳轉)
+        // ⚠️ 請確認您的 GAS 網址 (僅用於背景檢查資料，不影響按鈕跳轉)
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
 
         window.onload = function() {
@@ -197,7 +198,7 @@
                             const userId = profile.userId;
                             const displayName = profile.displayName;
                             
-                            // 1. 取得 ID 後，立刻呼叫後端 API 進行「檢查或自動建檔」
+                            // 呼叫後端 API 進行檢查或自動建檔
                             checkAndCreateUser(userId, displayName);
                         }).catch(err => {
                             console.error('LIFF Profile Error', err);
@@ -212,37 +213,33 @@
         }
 
         function checkAndCreateUser(userId, displayName) {
-            // 呼叫 GAS 後端，action 設為 user_login_check
+            // 呼叫 GAS 後端 API
             const url = `${GAS_URL}?action=user_login_check&u_id=${encodeURIComponent(userId)}&u_name=${encodeURIComponent(displayName)}`;
             
             fetch(url)
                 .then(res => res.json())
                 .then(result => {
-                    // 無論是新建立(created)還是已存在(exist)，都顯示 QR Code
+                    // 成功後顯示 QR Code
                     showQrCode(userId, displayName);
                 })
                 .catch(err => {
                     console.error('API Error', err);
-                    // 即使網路連線失敗，為了不影響現場使用，仍然顯示 QR Code
+                    // 即使連線失敗，為了現場運作，仍先顯示 QR Code
                     showQrCode(userId, displayName); 
                 });
         }
 
         function showQrCode(userId, displayName) {
-            // 隱藏讀取訊息，顯示內容
             document.getElementById('loading-msg').style.display = 'none';
             document.getElementById('user-info').style.display = 'flex';
             document.getElementById('user-info').style.flexDirection = 'column';
             document.getElementById('user-info').style.alignItems = 'center';
 
-            // 填入文字
             document.getElementById('display-name').innerText = displayName;
             document.getElementById('display-uid').innerText = userId;
 
-            // 清空舊的 QR Code (避免重複)
             document.getElementById('qrcode').innerHTML = '';
             
-            // 產生新的 QR Code
             new QRCode(document.getElementById("qrcode"), {
                 text: userId,
                 width: 150,
