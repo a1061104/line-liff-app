@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>排骨酥寵物美容管理系統</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <style>
         /* 整體版面設定 */
         body {
@@ -19,10 +22,32 @@
 
         h2 {
             color: #333;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             text-align: center;
             line-height: 1.4;
         }
+
+        /* --- QR Code 區塊樣式 --- */
+        #member-card {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+            display: none; /* 初始隱藏 */
+            box-sizing: border-box;
+        }
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        .card-title { font-size: 14px; color: #666; font-weight: bold; }
+        .uid-label { font-size: 10px; color: #ccc; word-break: break-all; }
+        /* ---------------------- */
 
         /* 選單容器 */
         .menu-container {
@@ -38,89 +63,100 @@
             border: none;
             border-radius: 15px;
             padding: 25px 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             display: flex;
             align-items: center;
-            justify-content: flex-start;
-            text-decoration: none; /* 移除超連結底線 */
+            text-decoration: none;
             color: #333;
-            position: relative;
-            overflow: hidden;
+            transition: transform 0.2s;
         }
 
-        /* 按下效果 */
-        .menu-btn:active {
-            transform: scale(0.98);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+        .menu-btn:active { transform: scale(0.98); }
 
-        /* 圖示區域 */
         .icon {
-            font-size: 40px;
+            font-size: 30px;
             margin-right: 20px;
-            width: 50px;
+            width: 40px;
             text-align: center;
             flex-shrink: 0;
         }
 
-        /* 文字區域 */
-        .text-content {
-            text-align: left;
-        }
+        .text-content { text-align: left; }
+        .title { font-size: 18px; font-weight: bold; display: block; margin-bottom: 5px; }
+        .desc { font-size: 14px; color: #888; }
 
-        .title {
-            font-size: 18px;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .desc {
-            font-size: 14px;
-            color: #888;
-        }
-
-        /* 個別按鈕顏色條裝飾 */
         .btn-customer { border-left: 6px solid #06c755; }
         .btn-pet { border-left: 6px solid #ff9f43; }
 
-        /* 頁尾 */
-        footer {
-            margin-top: auto;
-            color: #aaa;
-            font-size: 12px;
-            padding-top: 20px;
-            text-align: center;
-        }
+        footer { margin-top: auto; color: #aaa; font-size: 12px; padding: 20px 0; text-align: center; }
     </style>
 </head>
 <body>
 
     <h2>🐶 排骨酥寵物美容<br>管理系統</h2>
 
-    <div class="menu-container">
-        
-        <a href="Customer.html" class="menu-btn btn-customer">
-            <div class="icon">🙍‍♂️</div>
-            <div class="text-content">
-                <span class="title">客戶資料維護</span>
-                <span class="desc">新增、查詢或修改會員資料</span>
-            </div>
-        </a>
-
-        <a href="Pet.html" class="menu-btn btn-pet">
-            <div class="icon">🐕</div>
-            <div class="text-content">
-                <span class="title">寵物資料建檔</span>
-                <span class="desc">建立寵物病歷與注意事項</span>
-            </div>
-        </a>
-
+    <div id="member-card">
+        <span class="card-title">會員專屬條碼</span>
+        <div id="qrcode"></div>
+        <div id="user-id-text" class="uid-label">正在載入會員編號...</div>
     </div>
 
-    <footer>&copy; 2026 排骨酥寵物美容</footer>
+    <div class="menu-container">
+        <a href="?page=customer" class="menu-btn btn-customer">
+            <div class="icon">🙍‍♂️</div>
+            <div class="text-content">
+                <span class="title">會員資料維護</span>
+                <span class="desc">修改個人資訊、手機與地址</span>
+            </div>
+        </a>
 
+        <a href="?page=pet" class="menu-btn btn-pet">
+            <div class="icon">🐾</div>
+            <div class="text-content">
+                <span class="title">寵物資料建檔</span>
+                <span class="desc">管理您的毛小孩資訊</span>
+            </div>
+        </a>
+    </div>
+
+    <footer>
+        &copy; 2024 排骨酥寵物美容
+    </footer>
+
+    <script>
+        // 初始化 LIFF
+        window.onload = function() {
+            liff.init({ liffId: "2006811438-X8E0696n" }) // 請確認您的 LIFF ID
+                .then(() => {
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                    } else {
+                        liff.getProfile().then(profile => {
+                            displayMemberCard(profile.userId);
+                        });
+                    }
+                }).catch(err => console.error('LIFF Error', err));
+        };
+
+        // 產生並顯示會員卡
+        function displayMemberCard(userId) {
+            const card = document.getElementById('member-card');
+            const qrcodeDiv = document.getElementById('qrcode');
+            const idText = document.getElementById('user-id-text');
+
+            // 產生 QR Code
+            new QRCode(qrcodeDiv, {
+                text: userId,
+                width: 160,
+                height: 160,
+                colorDark : "#333333",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            idText.innerText = userId;
+            card.style.display = 'block'; // 顯示卡片
+        }
+    </script>
 </body>
 </html>
