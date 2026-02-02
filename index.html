@@ -40,7 +40,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 200px; /* 避免載入時跳動 */
+            min-height: 200px;
             justify-content: center;
         }
         
@@ -86,10 +86,12 @@
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            text-decoration: none; /* 移除超連結底線 */
+            text-decoration: none;
             color: #333;
             position: relative;
             overflow: hidden;
+            /* 確保 div 也有點擊手勢 */
+            user-select: none;
         }
 
         /* 按下效果 */
@@ -157,43 +159,48 @@
 
     <div class="menu-container">
         
-        <a href="?page=customer" class="menu-btn btn-customer">
+        <div class="menu-btn btn-customer" onclick="navigateTo('customer')">
             <div class="icon">🙍‍♂️</div>
             <div class="text-content">
                 <span class="title">客戶資料維護</span>
                 <span class="desc">新增、查詢或修改會員資料</span>
             </div>
-        </a>
+        </div>
 
-        <a href="?page=pet" class="menu-btn btn-pet">
+        <div class="menu-btn btn-pet" onclick="navigateTo('pet')">
             <div class="icon">🐕</div>
             <div class="text-content">
                 <span class="title">寵物資料建檔</span>
                 <span class="desc">建立寵物病歷與注意事項</span>
             </div>
-        </a>
+        </div>
 
-         <a href="?page=reservation" class="menu-btn btn-booking">
+        <div class="menu-btn btn-booking" onclick="navigateTo('reservation')">
             <div class="icon">📅</div>
             <div class="text-content">
                 <span class="title">美容預約</span>
                 <span class="desc">線上預約洗澡與美容服務</span>
             </div>
-        </a>
+        </div>
 
     </div>
 
     <footer>&copy; 2026 排骨酥寵物美容</footer>
 
     <script>
-        // 請替換為您的 LIFF ID (建議使用與其他頁面相同，或主頁專用的 LIFF ID)
         const MY_LIFF_ID = '2008965576-txfwY86y'; 
-        // 請確認這是您的 GAS 網址
+        // ⚠️ 請確認此網址與您的發布網址一致
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
 
         window.onload = function() {
             initializeLiff();
         };
+
+        // 🚀 關鍵修正：處理頁面跳轉
+        function navigateTo(pageName) {
+            // 使用 window.top.location.href 跳脫 GAS 的 iframe 沙箱
+            window.top.location.href = GAS_URL + '?page=' + pageName;
+        }
 
         function initializeLiff() {
             liff.init({ liffId: MY_LIFF_ID })
@@ -204,8 +211,6 @@
                         liff.getProfile().then(profile => {
                             const userId = profile.userId;
                             const displayName = profile.displayName;
-                            
-                            // 呼叫後端檢查並建立資料
                             checkAndCreateUser(userId, displayName);
                         }).catch(err => {
                             console.error('LIFF Profile Error', err);
@@ -220,20 +225,16 @@
         }
 
         function checkAndCreateUser(userId, displayName) {
-            // 準備呼叫後端 API
             const url = `${GAS_URL}?action=user_login_check&u_id=${encodeURIComponent(userId)}&u_name=${encodeURIComponent(displayName)}`;
             
             fetch(url)
                 .then(res => res.json())
                 .then(result => {
-                    // 無論是新建立(created)還是已存在(exist)，都顯示 QR Code
                     showQrCode(userId, displayName);
                 })
                 .catch(err => {
                     console.error('API Error', err);
-                    // 即使連線失敗，為了不影響現場使用，仍然可以嘗試顯示 QR Code (因為已經有 LIFF 的 userId)
                     showQrCode(userId, displayName); 
-                    // 可以在這裡加個小提示說連線異常，但 QR Code 可用
                 });
         }
 
@@ -246,10 +247,8 @@
             document.getElementById('display-name').innerText = displayName;
             document.getElementById('display-uid').innerText = userId;
 
-            // 清空舊的 (如果有)
             document.getElementById('qrcode').innerHTML = '';
             
-            // 產生 QR Code
             new QRCode(document.getElementById("qrcode"), {
                 text: userId,
                 width: 150,
