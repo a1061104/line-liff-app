@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>排骨酥寵物美容管理系統</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <style>
         /* 整體版面設定 */
         body {
@@ -19,10 +22,52 @@
 
         h2 {
             color: #333;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             text-align: center;
             line-height: 1.4;
         }
+
+        /* --- 新增：QR Code 區域樣式 --- */
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+            width: 100%;
+            max-width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 200px;
+            justify-content: center;
+        }
+        
+        #qrcode {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .user-id-text {
+            font-size: 14px;
+            color: #555;
+            margin-top: 5px;
+            font-family: monospace;
+            background: #eee;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .user-name-title {
+            font-weight: bold;
+            font-size: 18px;
+            color: #06c755;
+            margin-bottom: 5px;
+        }
+
+        #loading-msg { color: #888; font-size: 14px; }
+        /* --------------------------- */
 
         /* 選單容器 */
         .menu-container {
@@ -100,6 +145,16 @@
 
     <h2>🐶 排骨酥寵物美容<br>管理系統</h2>
 
+    <div class="qr-container">
+        <div id="loading-msg">讀取會員資料中...</div>
+        <div id="user-info" style="display:none;">
+            <div class="user-name-title" id="display-name"></div>
+            <div id="qrcode"></div>
+            <div class="user-id-text" id="display-uid"></div>
+            <div style="font-size:12px; color:#999; margin-top:5px;">請出示此碼以進行報到</div>
+        </div>
+    </div>
+
     <div class="menu-container">
         
         <a href="Customer.html" class="menu-btn btn-customer">
@@ -121,6 +176,83 @@
     </div>
 
     <footer>&copy; 2026 排骨酥寵物美容</footer>
+
+    <script>
+        // ⚠️ 請確認您的 LIFF ID
+        const MY_LIFF_ID = '2008965576-txfwY86y'; 
+        // ⚠️ 請確認您的 GAS 網址 (用於背景資料庫檢查，不影響頁面跳轉)
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
+
+        window.onload = function() {
+            initializeLiff();
+        };
+
+        function initializeLiff() {
+            liff.init({ liffId: MY_LIFF_ID })
+                .then(() => {
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                    } else {
+                        liff.getProfile().then(profile => {
+                            const userId = profile.userId;
+                            const displayName = profile.displayName;
+                            
+                            // 1. 取得 ID 後，立刻呼叫後端 API 進行「檢查或自動建檔」
+                            checkAndCreateUser(userId, displayName);
+                        }).catch(err => {
+                            console.error('LIFF Profile Error', err);
+                            document.getElementById('loading-msg').innerText = '讀取失敗，請重新整理';
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error('LIFF Init Error', err);
+                    document.getElementById('loading-msg').innerText = 'LIFF 初始化失敗';
+                });
+        }
+
+        function checkAndCreateUser(userId, displayName) {
+            // 呼叫 GAS 後端，action 設為 user_login_check
+            const url = `${GAS_URL}?action=user_login_check&u_id=${encodeURIComponent(userId)}&u_name=${encodeURIComponent(displayName)}`;
+            
+            fetch(url)
+                .then(res => res.json())
+                .then(result => {
+                    // 無論是新建立(created)還是已存在(exist)，都顯示 QR Code
+                    showQrCode(userId, displayName);
+                })
+                .catch(err => {
+                    console.error('API Error', err);
+                    // 即使網路連線失敗，為了不影響現場使用，仍然顯示 QR Code
+                    showQrCode(userId, displayName); 
+                });
+        }
+
+        function showQrCode(userId, displayName) {
+            // 隱藏讀取訊息，顯示內容
+            document.getElementById('loading-msg').style.display = 'none';
+            document.getElementById('user-info').style.display = 'flex';
+            document.getElementById('user-info').style.flexDirection = 'column';
+            document.getElementById('user-info').style.alignItems = 'center';
+
+            // 填入文字
+            document.getElementById('display-name').innerText = displayName;
+            document.getElementById('display-uid').innerText = userId;
+
+            // 清空舊的 QR Code (避免重複)
+            document.getElementById('qrcode').innerHTML = '';
+            
+            // 產生新的 QR Code
+            new QRCode(document.getElementById("qrcode"), {
+                text: userId,
+                width: 150,
+                height: 150,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+    </script>
 
 </body>
 </html>
