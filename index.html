@@ -27,7 +27,7 @@
             line-height: 1.4;
         }
 
-        /* QR Code 區域 */
+        /* QR Code 區域樣式 */
         .qr-container {
             background: white;
             padding: 20px;
@@ -86,21 +86,17 @@
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            text-decoration: none;
+            text-decoration: none; /* 移除超連結底線 */
             color: #333;
             position: relative;
             overflow: hidden;
-            /* 確保 div 也有點擊手勢 */
-            user-select: none;
         }
 
-        /* 按下效果 */
         .menu-btn:active {
             transform: scale(0.98);
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* 圖示區域 */
         .icon {
             font-size: 40px;
             margin-right: 20px;
@@ -109,29 +105,14 @@
             flex-shrink: 0;
         }
 
-        /* 文字區域 */
-        .text-content {
-            text-align: left;
-        }
+        .text-content { text-align: left; }
+        .title { font-size: 18px; font-weight: bold; display: block; margin-bottom: 5px; }
+        .desc { font-size: 14px; color: #888; }
 
-        .title {
-            font-size: 18px;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .desc {
-            font-size: 14px;
-            color: #888;
-        }
-
-        /* 個別按鈕顏色條裝飾 */
         .btn-customer { border-left: 6px solid #06c755; }
         .btn-pet { border-left: 6px solid #ff9f43; }
         .btn-booking { border-left: 6px solid #d81b60; }
 
-        /* 頁尾 */
         footer {
             margin-top: auto;
             color: #aaa;
@@ -139,13 +120,13 @@
             padding-top: 20px;
             text-align: center;
         }
-
+        
         #loading-msg { color: #888; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <h2>🐶 排骨酥寵物美容<br>會員中心</h2>
+    <h2>🐶 排骨酥寵物美容<br>管理系統</h2>
 
     <div class="qr-container">
         <div id="loading-msg">讀取會員資料中...</div>
@@ -159,29 +140,29 @@
 
     <div class="menu-container">
         
-        <div class="menu-btn btn-customer" onclick="navigateTo('customer')">
+        <a href="#" id="link-customer" class="menu-btn btn-customer">
             <div class="icon">🙍‍♂️</div>
             <div class="text-content">
                 <span class="title">客戶資料維護</span>
                 <span class="desc">新增、查詢或修改會員資料</span>
             </div>
-        </div>
+        </a>
 
-        <div class="menu-btn btn-pet" onclick="navigateTo('pet')">
+        <a href="#" id="link-pet" class="menu-btn btn-pet">
             <div class="icon">🐕</div>
             <div class="text-content">
                 <span class="title">寵物資料建檔</span>
                 <span class="desc">建立寵物病歷與注意事項</span>
             </div>
-        </div>
-
-        <div class="menu-btn btn-booking" onclick="navigateTo('reservation')">
+        </a>
+        
+        <a href="#" id="link-booking" class="menu-btn btn-booking">
             <div class="icon">📅</div>
             <div class="text-content">
                 <span class="title">美容預約</span>
                 <span class="desc">線上預約洗澡與美容服務</span>
             </div>
-        </div>
+        </a>
 
     </div>
 
@@ -189,17 +170,22 @@
 
     <script>
         const MY_LIFF_ID = '2008965576-txfwY86y'; 
-        // ⚠️ 請確認此網址與您的發布網址一致
+        // ⚠️ 請務必確認此網址是您「發布」後的 Web App URL
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
 
         window.onload = function() {
+            // 1. 設定按鈕連結 (解決點擊無反應的問題)
+            setupLinks();
+            
+            // 2. 初始化 LIFF 並處理 QR Code
             initializeLiff();
         };
 
-        // 🚀 關鍵修正：處理頁面跳轉
-        function navigateTo(pageName) {
-            // 使用 window.top.location.href 跳脫 GAS 的 iframe 沙箱
-            window.top.location.href = GAS_URL + '?page=' + pageName;
+        // 🚀 自動將連結替換為正確的 GAS 參數網址
+        function setupLinks() {
+            document.getElementById('link-customer').href = GAS_URL + '?page=customer';
+            document.getElementById('link-pet').href = GAS_URL + '?page=pet';
+            document.getElementById('link-booking').href = GAS_URL + '?page=reservation';
         }
 
         function initializeLiff() {
@@ -211,6 +197,8 @@
                         liff.getProfile().then(profile => {
                             const userId = profile.userId;
                             const displayName = profile.displayName;
+                            
+                            // 呼叫後端檢查是否需要自動建檔
                             checkAndCreateUser(userId, displayName);
                         }).catch(err => {
                             console.error('LIFF Profile Error', err);
@@ -225,15 +213,18 @@
         }
 
         function checkAndCreateUser(userId, displayName) {
+            // 呼叫後端 action=user_login_check
             const url = `${GAS_URL}?action=user_login_check&u_id=${encodeURIComponent(userId)}&u_name=${encodeURIComponent(displayName)}`;
             
             fetch(url)
                 .then(res => res.json())
                 .then(result => {
+                    // 無論是新建立還是已存在，都顯示 QR Code
                     showQrCode(userId, displayName);
                 })
                 .catch(err => {
                     console.error('API Error', err);
+                    // 即使連線失敗，為了不影響現場顯示 QR Code，仍嘗試顯示
                     showQrCode(userId, displayName); 
                 });
         }
@@ -247,8 +238,10 @@
             document.getElementById('display-name').innerText = displayName;
             document.getElementById('display-uid').innerText = userId;
 
+            // 清空舊的 QR Code (避免重複)
             document.getElementById('qrcode').innerHTML = '';
             
+            // 產生 QR Code
             new QRCode(document.getElementById("qrcode"), {
                 text: userId,
                 width: 150,
