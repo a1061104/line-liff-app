@@ -24,18 +24,22 @@
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #555; }
         .form-control, .form-select { width: 100%; padding: 0 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; background-color: #fff; height: 44px; line-height: 42px; }
         
-        /* 疾病與注意事項網格 */
+        /* 🚀 修正生日欄位樣態：確保日期輸入框高度與對齊與其他欄位一致 */
+        input[type="date"].form-control { 
+            line-height: 1.4; 
+            display: block; 
+            padding: 8px 10px;
+        }
+        
         .disease-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .checkbox-item { display: flex; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #eee; }
+        .checkbox-item { display: flex; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #eee; box-sizing: border-box;}
         .checkbox-item input { margin-right: 10px; width: 20px; height: 20px; flex-shrink: 0; }
         
-        /* 說明欄位區塊 */
         .memo-container { grid-column: span 2; border: 1px solid #eee; padding: 12px; border-radius: 8px; background: #fff; }
         .memo-header { display: flex; align-items: center; margin-bottom: 8px; }
         .memo-header input { margin-right: 10px; width: 20px; height: 20px; }
         .memo-header label { font-weight: bold; font-size: 14px; color: #333; }
         
-        /* 🚀 優化：輸入欄位寬度與對齊 */
         .memo-input { width: 85%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; display: block; margin-left: 30px; box-sizing: border-box; }
 
         .btn-submit { width: 100%; padding: 14px; background-color: #06c755; color: white; border: none; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 30px; box-shadow: 0 4px 6px rgba(6,199,85,0.2); }
@@ -43,8 +47,6 @@
         
         #loading-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 999; font-weight: bold; color: #06c755; }
         #mode-label { font-size: 13px; color: #666; text-align: right; margin-bottom: 10px; display: none;}
-        
-        /* 禁止手動點擊特定的勾選框 */
         .readonly-check { pointer-events: none; opacity: 0.8; }
     </style>
 </head>
@@ -67,7 +69,6 @@
         <div id="mode-label">目前模式：<span id="current-mode-text" style="font-weight:bold;">維護模式</span></div>
 
         <div id="pet-form">
-            
             <div class="section-title">📂 基本資料</div>
             <input type="hidden" id="current_p_id" value="">
             <div class="form-group"><label>寵物名稱 <span style="color:red">*</span></label><input type="text" id="p_name" class="form-control" placeholder="請輸入寵物姓名"></div>
@@ -86,7 +87,7 @@
                 <label style="color:#e74c3c;">是否有以下病史？(可複選)</label>
                 <div class="checkbox-item" style="margin-bottom:12px; background:#fff3e0;">
                     <input type="checkbox" id="ps_none" onchange="toggleHealthy(this)">
-                    <label for="ps_none" style="margin:0; width:100%; font-weight:bold;">健康無疾病</label>
+                    <label for="ps_none" style="margin:0; width:100%; font-weight:bold;">✅ 健康無疾病</label>
                 </div>
                 <div class="disease-grid" id="sick-list">
                     <div class="checkbox-item"><input type="checkbox" id="ps_ckd" onchange="onSickItemChange()"><label for="ps_ckd">慢性腎衰</label></div>
@@ -127,7 +128,7 @@
                     <label style="color:#e67e22;">美容/住宿注意事項 (可複選)</label>
                     <div class="checkbox-item" style="margin-bottom:12px; background:#fff3e0;">
                         <input type="checkbox" id="pw_none" onchange="toggleWariness(this)">
-                        <label for="pw_none" style="margin:0; width:100%; font-weight:bold;">無須注意事項</label>
+                        <label for="pw_none" style="margin:0; width:100%; font-weight:bold;">✅ 無須注意事項</label>
                     </div>
                     <div class="disease-grid" id="wariness-list">
                         <div class="checkbox-item"><input type="checkbox" id="pw_asb" onchange="onWarinessItemChange()"><label for="pw_asb">具攻擊性</label></div>
@@ -168,7 +169,6 @@
             document.getElementById('p_type').addEventListener('change', function() { renderBreedsOptions(); });
         };
 
-        // 🚀 文字與勾選框自動連動邏輯
         function updateLinkedCheckbox(chkId, memoId, type) {
             const memoVal = document.getElementById(memoId).value.trim();
             document.getElementById(chkId).checked = (memoVal !== ''); 
@@ -236,9 +236,9 @@
             });
         }
 
-        function toggleHealthy(cb) { if (cb.checked) { document.querySelectorAll('#sick-list input[type="checkbox"]').forEach(el => el.checked = false); document.querySelectorAll('#sick-list input[type="text"]').forEach(el => el.value = ''); } }
+        function toggleHealthy(cb) { if (cb.checked) { document.querySelectorAll('#sick-list input[type=\"checkbox\"]').forEach(el => el.checked = false); document.querySelectorAll('#sick-list input[type=\"text\"]').forEach(el => el.value = ''); } }
         function onSickItemChange() { document.getElementById('ps_none').checked = false; }
-        function toggleWariness(cb) { if (cb.checked) { document.querySelectorAll('#wariness-list input[type="checkbox"]').forEach(el => el.checked = false); document.querySelectorAll('#wariness-list input[type="text"]').forEach(el => el.value = ''); } }
+        function toggleWariness(cb) { if (cb.checked) { document.querySelectorAll('#wariness-list input[type=\"checkbox\"]').forEach(el => el.checked = false); document.querySelectorAll('#wariness-list input[type=\"text\"]').forEach(el => el.value = ''); } }
         function onWarinessItemChange() { document.getElementById('pw_none').checked = false; }
 
         function savePet() {
@@ -266,4 +266,3 @@
     </script>
 </body>
 </html>
-
