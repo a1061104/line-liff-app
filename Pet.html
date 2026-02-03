@@ -23,7 +23,7 @@
         .form-control, .form-select { width: 100%; padding: 0 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; background-color: #fff; height: 44px; line-height: 42px; appearance: none; -webkit-appearance: none; }
         .form-select { background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 10px center; background-size: 16px; color: #333; }
         .disease-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .checkbox-item { display: flex; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #eee; }
+        .checkbox-item { display: flex; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #eee; height: 100%; box-sizing: border-box;}
         .checkbox-item input { margin-right: 10px; width: 20px; height: 20px; flex-shrink: 0; }
         .memo-input { width: 100%; margin-top: 5px; padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
         .btn { width: 100%; padding: 14px; background-color: #06c755; color: white; border: none; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
@@ -37,7 +37,6 @@
 
     <div class="container">
         <h3>🐶 寵物資料管理 🐱</h3>
-        
         <div class="pet-controls">
             <div class="pet-select-wrapper">
                 <label>維護既有寵物：</label>
@@ -85,11 +84,26 @@
                     <div class="checkbox-item"><input type="checkbox" id="ps_gi" onchange="onSickItemChange()"><label for="ps_gi">病毒腸炎</label></div>
                     <div class="checkbox-item"><input type="checkbox" id="ps_cdv" onchange="onSickItemChange()"><label for="ps_cdv">犬瘟熱</label></div>
                     <div class="checkbox-item"><input type="checkbox" id="ps_piv" onchange="onSickItemChange()"><label for="ps_piv">副流感</label></div>
-                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;"><input type="checkbox" id="ps_dl" onchange="onSickItemChange()"> <label for="ps_dl">關節脫臼</label><input type="text" id="ps_dl_memo" class="memo-input" placeholder="說明..." oninput="onSickItemChange()"></div>
-                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;"><input type="checkbox" id="ps_ntds" onchange="onSickItemChange()"> <label for="ps_ntds">寄生蟲感染</label><input type="text" id="ps_ntds_memo" class="memo-input" placeholder="說明..." oninput="onSickItemChange()"></div>
-                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;"><input type="checkbox" id="ps_oa" onchange="onSickItemChange()"> <label for="ps_oa">骨骼舊傷</label><input type="text" id="ps_oa_memo" class="memo-input" placeholder="說明..." oninput="onSickItemChange()"></div>
-                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;"><input type="checkbox" id="ps_ad" onchange="onSickItemChange()"> <label for="ps_ad">皮膚疾病</label><input type="text" id="ps_ad_memo" class="memo-input" placeholder="說明..." oninput="onSickItemChange()"></div>
-                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;"><input type="checkbox" id="ps_other" onchange="onSickItemChange()"> <label for="ps_other">其他病史</label><input type="text" id="ps_other_memo" class="memo-input" placeholder="說明..." oninput="onSickItemChange()"></div>
+                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;">
+                        <input type="checkbox" id="ps_dl" onchange="onSickItemChange()"> <label for="ps_dl">關節脫臼</label>
+                        <input type="text" id="ps_dl_memo" class="memo-input" placeholder="說明..." oninput="updateLinkedCheckbox('ps_dl','ps_dl_memo','sick')">
+                    </div>
+                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;">
+                        <input type="checkbox" id="ps_ntds" onchange="onSickItemChange()"> <label for="ps_ntds">寄生蟲感染</label>
+                        <input type="text" id="ps_ntds_memo" class="memo-input" placeholder="說明..." oninput="updateLinkedCheckbox('ps_ntds','ps_ntds_memo','sick')">
+                    </div>
+                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;">
+                        <input type="checkbox" id="ps_oa" onchange="onSickItemChange()"> <label for="ps_oa">骨骼舊傷</label>
+                        <input type="text" id="ps_oa_memo" class="memo-input" placeholder="說明..." oninput="updateLinkedCheckbox('ps_oa','ps_oa_memo','sick')">
+                    </div>
+                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;">
+                        <input type="checkbox" id="ps_ad" onchange="onSickItemChange()"> <label for="ps_ad">皮膚疾病</label>
+                        <input type="text" id="ps_ad_memo" class="memo-input" placeholder="說明..." oninput="updateLinkedCheckbox('ps_ad','ps_ad_memo','sick')">
+                    </div>
+                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;">
+                        <input type="checkbox" id="ps_other" onchange="onSickItemChange()"> <label for="ps_other">其他病史</label>
+                        <input type="text" id="ps_other_memo" class="memo-input" placeholder="說明..." oninput="updateLinkedCheckbox('ps_other','ps_other_memo','sick')">
+                    </div>
                 </div>
             </div>
         </div>
@@ -105,8 +119,14 @@
                     <div class="checkbox-item"><input type="checkbox" id="pw_sad" onchange="onWarinessItemChange()"><label for="pw_sad">分離焦慮</label></div>
                     <div class="checkbox-item"><input type="checkbox" id="pw_dds" onchange="onWarinessItemChange()"><label for="pw_dds">易掙扎</label></div>
                     <div class="checkbox-item"><input type="checkbox" id="pw_pd" onchange="onWarinessItemChange()"><label for="pw_pd">不親人</label></div>
-                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;"><input type="checkbox" id="pw_bwa" onchange="onWarinessItemChange()"> <label for="pw_bwa">敏感部位</label><input type="text" id="pw_bwa_memo" class="memo-input" placeholder="說明..." oninput="onWarinessItemChange()"></div>
-                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;"><input type="checkbox" id="pw_other" onchange="onWarinessItemChange()"> <label for="pw_other">其他注意</label><input type="text" id="pw_other_memo" class="memo-input" placeholder="說明..." oninput="onWarinessItemChange()"></div>
+                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;">
+                        <input type="checkbox" id="pw_bwa" onchange="onWarinessItemChange()"> <label for="pw_bwa">敏感部位</label>
+                        <input type="text" id="pw_bwa_memo" class="memo-input" placeholder="說明..." oninput="updateLinkedCheckbox('pw_bwa','pw_bwa_memo','war')">
+                    </div>
+                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;">
+                        <input type="checkbox" id="pw_other" onchange="onWarinessItemChange()"> <label for="pw_other">其他注意</label>
+                        <input type="text" id="pw_other_memo" class="memo-input" placeholder="說明..." oninput="updateLinkedCheckbox('pw_other','pw_other_memo','war')">
+                    </div>
                 </div>
             </div>
             <button id="btn-save" class="btn" onclick="savePet()">確認儲存</button>
@@ -116,15 +136,11 @@
     <script>
         const MY_LIFF_ID = '2008965576-txfwY86y'; 
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
-
-        let currentUserId = '';
-        let allBreedsData = [];
+        let currentUserId = '', allBreedsData = [];
 
         window.onload = function() {
             liff.init({ liffId: MY_LIFF_ID }).then(() => {
-                // 🚀 關鍵修復：確保品種載入後才執行後續動作
                 loadBreedData().then(() => {
-                    console.log('Breed data loaded:', allBreedsData.length);
                     if (!liff.isLoggedIn()) { liff.login(); } 
                     else { liff.getProfile().then(profile => { currentUserId = profile.userId; loadPetList(); }); }
                 });
@@ -132,40 +148,31 @@
             document.getElementById('p_type').addEventListener('change', function() { renderBreedsOptions(); });
         };
 
+        // 🚀 新增：當說明欄有字時，自動勾選對應 Checkbox
+        function updateLinkedCheckbox(chkId, memoId, type) {
+            const memoVal = document.getElementById(memoId).value.trim();
+            if (memoVal !== '') {
+                document.getElementById(chkId).checked = true;
+            }
+            if (type === 'sick') onSickItemChange();
+            else onWarinessItemChange();
+        }
+
         function loadBreedData() {
-            return fetch(GAS_URL + `?action=pet_get_breeds`)
-                .then(res => res.json())
-                .then(result => {
-                    if (result.status === 'success') {
-                        allBreedsData = result.data;
-                        renderBreedsOptions(); // 載入後先跑一次初始選單
-                    } else {
-                        console.error('API return error:', result);
-                    }
-                })
-                .catch(err => console.error('Network Error:', err));
+            return fetch(GAS_URL + `?action=pet_get_breeds`).then(res => res.json()).then(result => {
+                if (result.status === 'success') { allBreedsData = result.data; renderBreedsOptions(); }
+            });
         }
 
         function renderBreedsOptions(selectedValue = '') {
             const type = document.getElementById('p_type').value;
             const select = document.getElementById('p_breeds');
             select.innerHTML = '<option value="">請選擇品種</option>';
-            
-            // 🚀 加入容錯：如果 allBreedsData 是空的，直接跳過
-            if (!allBreedsData || allBreedsData.length === 0) return;
-
-            // 🚀 根據種類過濾 (假設 Code 第一碼為種類)
-            const filtered = allBreedsData.filter(item => {
-                if (!item.code) return true; // 如果沒有代碼，顯示出來
-                return item.code.toString().startsWith(type);
-            });
-
-            filtered.forEach(item => {
+            if (!allBreedsData) return;
+            allBreedsData.filter(item => item.code.toString().startsWith(type)).forEach(item => {
                 let option = document.createElement('option');
-                option.value = item.name; option.text = item.name;
-                select.appendChild(option);
+                option.value = item.name; option.text = item.name; select.appendChild(option);
             });
-            
             if (selectedValue) select.value = selectedValue;
         }
 
@@ -176,8 +183,7 @@
                 const select = document.getElementById('pet-select');
                 if (result.status === 'success') {
                     select.innerHTML = ''; 
-                    let placeholder = new Option("🔽 請選擇欲修改的寵物...", "");
-                    placeholder.disabled = true; select.add(placeholder);
+                    let placeholder = new Option("🔽 請選擇欲修改的寵物...", ""); placeholder.disabled = true; select.add(placeholder);
                     if (result.data.length > 0) {
                         result.data.forEach(pet => { select.add(new Option(`🐶 ${pet.p_name}`, pet.p_id)); });
                         select.selectedIndex = 1; loadPetDetail(result.data[0].p_id); updateModeLabel(false);
@@ -192,28 +198,22 @@
             .then(res => res.json()).then(result => {
                 document.getElementById('loading-mask').style.display = 'none';
                 if (result.status === 'success') {
-                    const d = result.data;
-                    document.getElementById('current_p_id').value = petId;
+                    const d = result.data; document.getElementById('current_p_id').value = petId;
                     if(d.basic) {
-                        document.getElementById('p_name').value = d.basic.p_name;
-                        document.getElementById('p_type').value = d.basic.p_type;
-                        // 🚀 設定寵物詳情時，根據目前寵物種類重新渲染選單，再選取正確品種
-                        renderBreedsOptions(d.basic.p_breeds);
-                        document.getElementById('p_sex').value = d.basic.p_sex;
-                        document.getElementById('p_weight').value = d.basic.p_weight || '';
-                        document.getElementById('p_birthday').value = d.basic.p_birthday || '';
-                        document.getElementById('p_ic').value = d.basic.p_ic || '';
-                        document.getElementById('p_memo').value = d.basic.p_memo || '';
+                        document.getElementById('p_name').value = d.basic.p_name; document.getElementById('p_type').value = d.basic.p_type;
+                        renderBreedsOptions(d.basic.p_breeds); document.getElementById('p_sex').value = d.basic.p_sex;
+                        document.getElementById('p_weight').value = d.basic.p_weight || ''; document.getElementById('p_birthday').value = d.basic.p_birthday || '';
+                        document.getElementById('p_ic').value = d.basic.p_ic || ''; document.getElementById('p_memo').value = d.basic.p_memo || '';
                     }
                     if(d.sick) {
-                        const setCheck = (id, val) => { document.getElementById(id).checked = (val == 1); };
-                        const setVal = (id, val) => { document.getElementById(id).value = val || ''; };
-                        setCheck('ps_none', d.sick.ps_none); setCheck('ps_ckd', d.sick.ps_ckd); setCheck('ps_rv', d.sick.ps_rv); setCheck('ps_hi', d.sick.ps_hi); setCheck('ps_vi', d.sick.ps_vi); setCheck('ps_hwd', d.sick.ps_hwd); setCheck('ps_gi', d.sick.ps_gi); setCheck('ps_cdv', d.sick.ps_cdv); setCheck('ps_piv', d.sick.ps_piv); setCheck('ps_dl', d.sick.ps_dl); setVal('ps_dl_memo', d.sick.ps_dl_memo); setCheck('ps_ntds', d.sick.ps_ntds); setVal('ps_ntds_memo', d.sick.ps_ntds_memo); setCheck('ps_oa', d.sick.ps_oa); setVal('ps_oa_memo', d.sick.ps_oa_memo); setCheck('ps_ad', d.sick.ps_ad); setVal('ps_ad_memo', d.sick.ps_ad_memo); setCheck('ps_other', d.sick.ps_other); setVal('ps_other_memo', d.sick.ps_other_memo);
+                        const setC = (id, v) => { document.getElementById(id).checked = (v == 1); };
+                        const setV = (id, v) => { document.getElementById(id).value = v || ''; };
+                        setC('ps_none', d.sick.ps_none); setC('ps_ckd', d.sick.ps_ckd); setC('ps_rv', d.sick.ps_rv); setC('ps_hi', d.sick.ps_hi); setC('ps_vi', d.sick.ps_vi); setC('ps_hwd', d.sick.ps_hwd); setC('ps_gi', d.sick.ps_gi); setC('ps_cdv', d.sick.ps_cdv); setC('ps_piv', d.sick.ps_piv); setC('ps_dl', d.sick.ps_dl); setV('ps_dl_memo', d.sick.ps_dl_memo); setC('ps_ntds', d.sick.ps_ntds); setV('ps_ntds_memo', d.sick.ps_ntds_memo); setC('ps_oa', d.sick.ps_oa); setV('ps_oa_memo', d.sick.ps_oa_memo); setC('ps_ad', d.sick.ps_ad); setV('ps_ad_memo', d.sick.ps_ad_memo); setC('ps_other', d.sick.ps_other); setV('ps_other_memo', d.sick.ps_other_memo);
                     }
                     if(d.wariness) {
-                        const setCheck = (id, val) => { document.getElementById(id).checked = (val == 1); };
-                        const setVal = (id, val) => { document.getElementById(id).value = val || ''; };
-                        setCheck('pw_none', d.wariness.pw_none); setCheck('pw_asb', d.wariness.pw_asb); setCheck('pw_wn', d.wariness.pw_wn); setCheck('pw_mani', d.wariness.pw_mani); setCheck('pw_sad', d.wariness.pw_sad); setCheck('pw_dds', d.wariness.pw_dds); setCheck('pw_pd', d.wariness.pw_pd); setCheck('pw_bwa', d.wariness.pw_bwa); setVal('pw_bwa_memo', d.wariness.pw_bwa_memo); setCheck('pw_other', d.wariness.pw_other); setVal('pw_other_memo', d.wariness.pw_other_memo);
+                        const setC = (id, v) => { document.getElementById(id).checked = (v == 1); };
+                        const setV = (id, v) => { document.getElementById(id).value = v || ''; };
+                        setC('pw_none', d.wariness.pw_none); setC('pw_asb', d.wariness.pw_asb); setC('pw_wn', d.wariness.pw_wn); setC('pw_mani', d.wariness.pw_mani); setC('pw_sad', d.wariness.pw_sad); setC('pw_dds', d.wariness.pw_dds); setC('pw_pd', d.wariness.pw_pd); setC('pw_bwa', d.wariness.pw_bwa); setV('pw_bwa_memo', d.wariness.pw_bwa_memo); setC('pw_other', d.wariness.pw_other); setV('pw_other_memo', d.wariness.pw_other_memo);
                     }
                     switchTab('basic');
                 }
@@ -226,11 +226,9 @@
         function onWarinessItemChange() { document.getElementById('pw_none').checked = false; }
 
         function savePet() {
-            const name = document.getElementById('p_name').value;
-            const breeds = document.getElementById('p_breeds').value;
+            const name = document.getElementById('p_name').value, breeds = document.getElementById('p_breeds').value;
             if (!name || !breeds) { alert('請填寫必填欄位 (名稱與品種)'); return; }
-            const btn = document.getElementById('btn-save');
-            btn.disabled = true; btn.innerText = '儲存中...';
+            const btn = document.getElementById('btn-save'); btn.disabled = true; btn.innerText = '儲存中...';
             const getC = (id) => document.getElementById(id).checked ? 1 : 0;
             const getV = (id) => document.getElementById(id).value.trim();
             const sickChecks = ['ps_ckd','ps_rv','ps_hi','ps_vi','ps_hwd','ps_gi','ps_cdv','ps_piv','ps_dl','ps_ntds','ps_oa','ps_ad','ps_other'];
@@ -242,47 +240,17 @@
 
             let params = `?action=pet_save&u_id=${encodeURIComponent(currentUserId)}&p_id=${document.getElementById('current_p_id').value}&p_name=${encodeURIComponent(name)}&p_type=${document.getElementById('p_type').value}&p_sex=${document.getElementById('p_sex').value}&p_breeds=${encodeURIComponent(breeds)}&p_weight=${getV('p_weight')}&p_birthday=${getV('p_birthday')}&p_ic=${encodeURIComponent(getV('p_ic'))}&p_memo=${encodeURIComponent(getV('p_memo'))}`;
             params += `&ps_none=${(!anyS?1:getC('ps_none'))}`;
-            sickChecks.forEach(id => params += `&${id}=${getC(id)}`);
-            sickMemos.forEach(id => params += `&${id}=${encodeURIComponent(getV(id))}`);
+            sickChecks.forEach(id => params += `&${id}=${getC(id)}`); sickMemos.forEach(id => params += `&${id}=${encodeURIComponent(getV(id))}`);
             params += `&pw_none=${(!anyW?1:getC('pw_none'))}`;
-            warChecks.forEach(id => params += `&${id}=${getC(id)}`);
-            warMemos.forEach(id => params += `&${id}=${encodeURIComponent(getV(id))}`);
+            warChecks.forEach(id => params += `&${id}=${getC(id)}`); warMemos.forEach(id => params += `&${id}=${encodeURIComponent(getV(id))}`);
 
-            fetch(GAS_URL + params).then(res => res.json()).then(result => {
-                if (result.status === 'success') { alert('儲存成功！'); location.reload(); }
-            }).catch(err => { alert('存檔失敗'); btn.disabled = false; btn.innerText = '確認儲存'; });
+            fetch(GAS_URL + params).then(res => res.json()).then(result => { if (result.status === 'success') { alert('儲存成功！'); location.reload(); } }).catch(err => { alert('連線失敗'); btn.disabled = false; btn.innerText = '確認儲存'; });
         }
 
-        function switchTab(t) {
-            document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active'));
-            const idx = t==='basic'?1:t==='sick'?2:3;
-            document.querySelector(`.tab:nth-child(${idx})`).classList.add('active');
-            document.getElementById(`tab-${t}`).classList.add('active');
-        }
-
-        function switchToNewPetMode() {
-            document.getElementById('current_p_id').value = '';
-            document.querySelectorAll('input[type=text], input[type=date], input[type=number], textarea').forEach(el => el.value = '');
-            document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false);
-            document.getElementById('pet-select').value = "";
-            renderBreedsOptions();
-            updateModeLabel(true);
-            switchTab('basic');
-        }
-
-        function updateModeLabel(isNew) {
-            const label = document.getElementById('mode-label');
-            const text = document.getElementById('current-mode-text');
-            label.style.display = 'block';
-            text.innerText = isNew ? '新增模式' : '維護模式';
-            text.style.color = isNew ? '#ff9800' : '#06c755';
-            document.getElementById('btn-save').innerText = isNew ? '確認新增' : '儲存修改';
-        }
-
-        function onPetSelectChange() {
-            const id = document.getElementById('pet-select').value;
-            if (id) { loadPetDetail(id); updateModeLabel(false); }
-        }
+        function switchTab(t) { document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active')); const idx = t==='basic'?1:t==='sick'?2:3; document.querySelector(`.tab:nth-child(${idx})`).classList.add('active'); document.getElementById(`tab-${t}`).classList.add('active'); }
+        function switchToNewPetMode() { document.getElementById('current_p_id').value = ''; document.querySelectorAll('input[type=text], input[type=date], input[type=number], textarea').forEach(el => el.value = ''); document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false); document.getElementById('pet-select').value = ""; renderBreedsOptions(); updateModeLabel(true); switchTab('basic'); }
+        function updateModeLabel(isNew) { const label = document.getElementById('mode-label'), text = document.getElementById('current-mode-text'); label.style.display = 'block'; text.innerText = isNew ? '新增模式' : '維護模式'; text.style.color = isNew ? '#ff9800' : '#06c755'; document.getElementById('btn-save').innerText = isNew ? '確認新增' : '儲存修改'; }
+        function onPetSelectChange() { const id = document.getElementById('pet-select').value; if (id) { loadPetDetail(id); updateModeLabel(false); } }
     </script>
 </body>
 </html>
