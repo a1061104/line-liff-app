@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>寵物資料管理</title>
+    <title>毛小孩資料維護</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; background-color: #f5f5f5; padding: 15px; margin: 0; }
@@ -53,7 +53,7 @@
     <div id="loading-mask"><div>資料讀取中...</div></div>
 
     <div class="container">
-        <h3>🐶 寵物資料管理 🐱</h3>
+        <h3>🐶 毛小孩資料維護 🐱</h3>
         
         <div class="pet-controls">
             <div class="pet-select-wrapper">
@@ -86,7 +86,7 @@
                 <label style="color:#e74c3c;">是否有以下病史？(可複選)</label>
                 <div class="checkbox-item" style="margin-bottom:12px; background:#fff3e0;">
                     <input type="checkbox" id="ps_none" onchange="toggleHealthy(this)">
-                    <label for="ps_none" style="margin:0; width:100%; font-weight:bold;">✅ 健康無疾病</label>
+                    <label for="ps_none" style="margin:0; width:100%; font-weight:bold;">健康無疾病</label>
                 </div>
                 <div class="disease-grid" id="sick-list">
                     <div class="checkbox-item"><input type="checkbox" id="ps_ckd" onchange="onSickItemChange()"><label for="ps_ckd">慢性腎衰</label></div>
@@ -127,7 +127,7 @@
                     <label style="color:#e67e22;">美容/住宿注意事項 (可複選)</label>
                     <div class="checkbox-item" style="margin-bottom:12px; background:#fff3e0;">
                         <input type="checkbox" id="pw_none" onchange="toggleWariness(this)">
-                        <label for="pw_none" style="margin:0; width:100%; font-weight:bold;">✅ 無須注意事項</label>
+                        <label for="pw_none" style="margin:0; width:100%; font-weight:bold;">無須注意事項</label>
                     </div>
                     <div class="disease-grid" id="wariness-list">
                         <div class="checkbox-item"><input type="checkbox" id="pw_asb" onchange="onWarinessItemChange()"><label for="pw_asb">具攻擊性</label></div>
@@ -266,3 +266,4 @@
     </script>
 </body>
 </html>
+
