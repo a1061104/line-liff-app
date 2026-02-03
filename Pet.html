@@ -22,13 +22,28 @@
         
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #555; }
-        .form-control, .form-select { width: 100%; padding: 0 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; background-color: #fff; height: 44px; line-height: 42px; }
         
-        /* 🚀 修正生日欄位樣態：確保日期輸入框高度與對齊與其他欄位一致 */
-        input[type="date"].form-control { 
-            line-height: 1.4; 
-            display: block; 
-            padding: 8px 10px;
+        /* 🚀 統一所有輸入框樣式 */
+        .form-control, .form-select { 
+            width: 100%; 
+            padding: 0 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            background-color: #fff; 
+            height: 44px; 
+            line-height: 42px; /* 為了垂直居中 */
+        }
+
+        /* 🚀 針對生日日期欄位的特別修正 (強制與 text 欄位一致) */
+        input[type="date"].form-control {
+            -webkit-appearance: none; /* 移除 iOS 預設樣式 */
+            -moz-appearance: none;
+            appearance: none;
+            display: block;
+            padding: 0 10px; /* 確保內距一致 */
+            line-height: 44px; /* 設定與高度一致以達成垂直置中 */
         }
         
         .disease-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -236,9 +251,9 @@
             });
         }
 
-        function toggleHealthy(cb) { if (cb.checked) { document.querySelectorAll('#sick-list input[type=\"checkbox\"]').forEach(el => el.checked = false); document.querySelectorAll('#sick-list input[type=\"text\"]').forEach(el => el.value = ''); } }
+        function toggleHealthy(cb) { if (cb.checked) { document.querySelectorAll('#sick-list input[type="checkbox"]').forEach(el => el.checked = false); document.querySelectorAll('#sick-list input[type="text"]').forEach(el => el.value = ''); } }
         function onSickItemChange() { document.getElementById('ps_none').checked = false; }
-        function toggleWariness(cb) { if (cb.checked) { document.querySelectorAll('#wariness-list input[type=\"checkbox\"]').forEach(el => el.checked = false); document.querySelectorAll('#wariness-list input[type=\"text\"]').forEach(el => el.value = ''); } }
+        function toggleWariness(cb) { if (cb.checked) { document.querySelectorAll('#wariness-list input[type="checkbox"]').forEach(el => el.checked = false); document.querySelectorAll('#wariness-list input[type="text"]').forEach(el => el.value = ''); } }
         function onWarinessItemChange() { document.getElementById('pw_none').checked = false; }
 
         function savePet() {
