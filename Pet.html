@@ -22,16 +22,21 @@
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #555; }
         .form-control, .form-select { width: 100%; padding: 0 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; background-color: #fff; height: 44px; line-height: 42px; appearance: none; -webkit-appearance: none; }
         .form-select { background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 10px center; background-size: 16px; color: #333; }
+        
         .disease-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .checkbox-item { display: flex; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #eee; height: 100%; box-sizing: border-box;}
+        .checkbox-item { display: flex; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #eee; box-sizing: border-box;}
         .checkbox-item input { margin-right: 10px; width: 20px; height: 20px; flex-shrink: 0; }
-        .memo-input { width: 100%; margin-top: 5px; padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+        
+        /* 🚀 修改：說明欄位樣式調整，寬度縮減 */
+        .memo-container { grid-column: span 2; border: 1px solid #eee; padding: 12px; border-radius: 8px; background: #fff; }
+        .memo-header { display: flex; align-items: center; margin-bottom: 8px; }
+        .memo-header input { margin-right: 10px; width: 20px; height: 20px; }
+        .memo-input { width: 85%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; display: block; margin-left: 30px; }
+
         .btn { width: 100%; padding: 14px; background-color: #06c755; color: white; border: none; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
         #loading-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 999; }
         #mode-label { font-size: 12px; color: #666; text-align: right; margin-top: -15px; margin-bottom: 10px; display: none;}
-        
-        /* 🚀 讓系統控制的勾選框看起來稍微灰一點，暗示不可直接點擊 */
-        .readonly-check { pointer-events: none; opacity: 0.7; }
+        .readonly-check { pointer-events: none; opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -64,7 +69,7 @@
                 <div style="flex:1;"><label>種類</label><select id="p_type" class="form-select"><option value="1">🐶 狗</option><option value="2">🐱 貓</option></select></div>
                 <div style="flex:1;"><label>性別</label><select id="p_sex" class="form-select"><option value="B">🚹 男生</option><option value="G">🚺 女生</option></select></div>
             </div>
-            <div class="form-group"><label>品種 <span style="color:red">*</span></label><select id="p_breeds" class="form-select"><option value="">讀取中...</option></select></div>
+            <div class="form-group"><label>品種 <span style="color:red">*</span></label><select id="p_breeds" class="form-select"><option value="">請選擇品種</option></select></div>
             <div class="form-group"><label>體重 (KG)</label><input type="number" id="p_weight" class="form-control" step="0.1"></div>
             <div class="form-group"><label>生日</label><input type="date" id="p_birthday" class="form-control"></div>
             <div class="form-group"><label>晶片號碼</label><input type="text" id="p_ic" class="form-control"></div>
@@ -74,7 +79,7 @@
         <div id="tab-sick" class="tab-content">
             <div class="form-group">
                 <label style="color:#e74c3c;">是否有以下病史？(可複選)</label>
-                <div class="checkbox-item" style="margin-bottom:10px; background:#fff3e0;">
+                <div class="checkbox-item" style="margin-bottom:12px; background:#fff3e0;">
                     <input type="checkbox" id="ps_none" onchange="toggleHealthy(this)">
                     <label for="ps_none" style="margin:0; width:100%; font-weight:bold;">✅ 健康無疾病</label>
                 </div>
@@ -88,25 +93,25 @@
                     <div class="checkbox-item"><input type="checkbox" id="ps_cdv" onchange="onSickItemChange()"><label for="ps_cdv">犬瘟熱</label></div>
                     <div class="checkbox-item"><input type="checkbox" id="ps_piv" onchange="onSickItemChange()"><label for="ps_piv">副流感</label></div>
                     
-                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;">
-                        <input type="checkbox" id="ps_dl" class="readonly-check" onclick="return false;"> <label for="ps_dl">關節脫臼 (由說明控制)</label>
-                        <input type="text" id="ps_dl_memo" class="memo-input" placeholder="填寫即自動勾選..." oninput="updateLinkedCheckbox('ps_dl','ps_dl_memo','sick')">
+                    <div class="memo-container">
+                        <div class="memo-header"><input type="checkbox" id="ps_dl" class="readonly-check" onclick="return false;"><label for="ps_dl">關節脫臼</label></div>
+                        <input type="text" id="ps_dl_memo" class="memo-input" placeholder="填寫說明..." oninput="updateLinkedCheckbox('ps_dl','ps_dl_memo','sick')">
                     </div>
-                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;">
-                        <input type="checkbox" id="ps_ntds" class="readonly-check" onclick="return false;"> <label for="ps_ntds">寄生蟲感染 (由說明控制)</label>
-                        <input type="text" id="ps_ntds_memo" class="memo-input" placeholder="填寫即自動勾選..." oninput="updateLinkedCheckbox('ps_ntds','ps_ntds_memo','sick')">
+                    <div class="memo-container">
+                        <div class="memo-header"><input type="checkbox" id="ps_ntds" class="readonly-check" onclick="return false;"><label for="ps_ntds">寄生蟲感染</label></div>
+                        <input type="text" id="ps_ntds_memo" class="memo-input" placeholder="填寫說明..." oninput="updateLinkedCheckbox('ps_ntds','ps_ntds_memo','sick')">
                     </div>
-                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;">
-                        <input type="checkbox" id="ps_oa" class="readonly-check" onclick="return false;"> <label for="ps_oa">骨骼舊傷 (由說明控制)</label>
-                        <input type="text" id="ps_oa_memo" class="memo-input" placeholder="填寫即自動勾選..." oninput="updateLinkedCheckbox('ps_oa','ps_oa_memo','sick')">
+                    <div class="memo-container">
+                        <div class="memo-header"><input type="checkbox" id="ps_oa" class="readonly-check" onclick="return false;"><label for="ps_oa">骨骼舊傷</label></div>
+                        <input type="text" id="ps_oa_memo" class="memo-input" placeholder="填寫說明..." oninput="updateLinkedCheckbox('ps_oa','ps_oa_memo','sick')">
                     </div>
-                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;">
-                        <input type="checkbox" id="ps_ad" class="readonly-check" onclick="return false;"> <label for="ps_ad">皮膚疾病 (由說明控制)</label>
-                        <input type="text" id="ps_ad_memo" class="memo-input" placeholder="填寫即自動勾選..." oninput="updateLinkedCheckbox('ps_ad','ps_ad_memo','sick')">
+                    <div class="memo-container">
+                        <div class="memo-header"><input type="checkbox" id="ps_ad" class="readonly-check" onclick="return false;"><label for="ps_ad">皮膚疾病</label></div>
+                        <input type="text" id="ps_ad_memo" class="memo-input" placeholder="填寫說明..." oninput="updateLinkedCheckbox('ps_ad','ps_ad_memo','sick')">
                     </div>
-                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;">
-                        <input type="checkbox" id="ps_other" class="readonly-check" onclick="return false;"> <label for="ps_other">其他病史 (由說明控制)</label>
-                        <input type="text" id="ps_other_memo" class="memo-input" placeholder="填寫即自動勾選..." oninput="updateLinkedCheckbox('ps_other','ps_other_memo','sick')">
+                    <div class="memo-container">
+                        <div class="memo-header"><input type="checkbox" id="ps_other" class="readonly-check" onclick="return false;"><label for="ps_other">其他病史</label></div>
+                        <input type="text" id="ps_other_memo" class="memo-input" placeholder="填寫說明..." oninput="updateLinkedCheckbox('ps_other','ps_other_memo','sick')">
                     </div>
                 </div>
             </div>
@@ -115,7 +120,7 @@
         <div id="tab-wariness" class="tab-content">
             <div class="form-group">
                 <label style="color:#e67e22;">美容/住宿注意事項 (可複選)</label>
-                <div class="checkbox-item" style="margin-bottom:10px; background:#fff3e0;"><input type="checkbox" id="pw_none" onchange="toggleWariness(this)"><label for="pw_none" style="margin:0; width:100%; font-weight:bold;">✅ 無須注意事項</label></div>
+                <div class="checkbox-item" style="margin-bottom:12px; background:#fff3e0;"><input type="checkbox" id="pw_none" onchange="toggleWariness(this)"><label for="pw_none" style="margin:0; width:100%; font-weight:bold;">✅ 無須注意事項</label></div>
                 <div class="disease-grid" id="wariness-list">
                     <div class="checkbox-item"><input type="checkbox" id="pw_asb" onchange="onWarinessItemChange()"><label for="pw_asb">具攻擊性</label></div>
                     <div class="checkbox-item"><input type="checkbox" id="pw_wn" onchange="onWarinessItemChange()"><label for="pw_wn">怕吹風機</label></div>
@@ -124,13 +129,13 @@
                     <div class="checkbox-item"><input type="checkbox" id="pw_dds" onchange="onWarinessItemChange()"><label for="pw_dds">易掙扎</label></div>
                     <div class="checkbox-item"><input type="checkbox" id="pw_pd" onchange="onWarinessItemChange()"><label for="pw_pd">不親人</label></div>
                     
-                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;">
-                        <input type="checkbox" id="pw_bwa" class="readonly-check" onclick="return false;"> <label for="pw_bwa">敏感部位 (由說明控制)</label>
-                        <input type="text" id="pw_bwa_memo" class="memo-input" placeholder="填寫即自動勾選..." oninput="updateLinkedCheckbox('pw_bwa','pw_bwa_memo','war')">
+                    <div class="memo-container">
+                        <div class="memo-header"><input type="checkbox" id="pw_bwa" class="readonly-check" onclick="return false;"><label for="pw_bwa">敏感部位</label></div>
+                        <input type="text" id="pw_bwa_memo" class="memo-input" placeholder="填寫說明..." oninput="updateLinkedCheckbox('pw_bwa','pw_bwa_memo','war')">
                     </div>
-                    <div style="grid-column: span 2; border: 1px solid #eee; padding: 10px; border-radius: 5px;">
-                        <input type="checkbox" id="pw_other" class="readonly-check" onclick="return false;"> <label for="pw_other">其他注意 (由說明控制)</label>
-                        <input type="text" id="pw_other_memo" class="memo-input" placeholder="填寫即自動勾選..." oninput="updateLinkedCheckbox('pw_other','pw_other_memo','war')">
+                    <div class="memo-container">
+                        <div class="memo-header"><input type="checkbox" id="pw_other" class="readonly-check" onclick="return false;"><label for="pw_other">其他注意</label></div>
+                        <input type="text" id="pw_other_memo" class="memo-input" placeholder="填寫說明..." oninput="updateLinkedCheckbox('pw_other','pw_other_memo','war')">
                     </div>
                 </div>
             </div>
@@ -153,15 +158,9 @@
             document.getElementById('p_type').addEventListener('change', function() { renderBreedsOptions(); });
         };
 
-        // 🚀 自動化連動邏輯
         function updateLinkedCheckbox(chkId, memoId, type) {
             const memoVal = document.getElementById(memoId).value.trim();
-            const chk = document.getElementById(chkId);
-            
-            // 當文字有值時勾選，為空時取消勾選
-            chk.checked = (memoVal !== ''); 
-            
-            // 同步取消「無疾病」或「無須注意」狀態
+            document.getElementById(chkId).checked = (memoVal !== ''); 
             if (type === 'sick') onSickItemChange(); else onWarinessItemChange();
         }
 
