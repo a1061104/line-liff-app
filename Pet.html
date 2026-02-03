@@ -89,7 +89,10 @@
                     <div class="checkbox-item"><input type="checkbox" id="ps_piv" onchange="onSickItemChange()"><label for="ps_piv">副流感</label></div>
                     <div class="checkbox-item"><input type="checkbox" id="ps_ad" onchange="onSickItemChange()"><label for="ps_ad">皮膚病</label></div>
                 </div>
-                <div class="form-group" style="margin-top:10px;"><label>其他疾病</label><input type="text" id="ps_other" class="form-control"></div>
+                <div class="form-group" style="margin-top:10px;">
+                    <label>其他疾病</label>
+                    <input type="text" id="ps_other" class="form-control" oninput="onSickItemChange()">
+                </div>
             </div>
         </div>
 
@@ -108,8 +111,14 @@
                     <div class="checkbox-item"><input type="checkbox" id="pw_dds" onchange="onWarinessItemChange()"><label for="pw_dds">易掙扎</label></div>
                     <div class="checkbox-item"><input type="checkbox" id="pw_pd" onchange="onWarinessItemChange()"><label for="pw_pd">不親人</label></div>
                 </div>
-                <div class="form-group" style="margin-top:10px;"><label>敏感部位 (如：尾巴、耳朵)</label><input type="text" id="pw_bwa" class="form-control"></div>
-                <div class="form-group"><label>其他注意事項</label><input type="text" id="pw_other" class="form-control"></div>
+                <div class="form-group" style="margin-top:10px;">
+                    <label>敏感部位 (如：尾巴、耳朵)</label>
+                    <input type="text" id="pw_bwa" class="form-control" oninput="onWarinessItemChange()">
+                </div>
+                <div class="form-group">
+                    <label>其他注意事項</label>
+                    <input type="text" id="pw_other" class="form-control" oninput="onWarinessItemChange()">
+                </div>
             </div>
             <button id="btn-save" class="btn" onclick="savePet()">確認儲存</button>
         </div>
@@ -189,8 +198,6 @@
                     if(d.sick) {
                         const setCheck = (id, val) => { document.getElementById(id).checked = (val == 1); };
                         setCheck('ps_none', d.sick.ps_none);
-                        // 初始化時執行一次互斥
-                        if(d.sick.ps_none == 1) toggleHealthy(document.getElementById('ps_none'));
                         setCheck('ps_ckd', d.sick.ps_ckd); setCheck('ps_ntds', d.sick.ps_ntds);
                         setCheck('ps_rv', d.sick.ps_rv); setCheck('ps_oa', d.sick.ps_oa);
                         setCheck('ps_dl', d.sick.ps_dl); setCheck('ps_hi', d.sick.ps_hi);
@@ -202,7 +209,6 @@
                     if(d.wariness) {
                         const setCheck = (id, val) => { document.getElementById(id).checked = (val == 1); };
                         setCheck('pw_none', d.wariness.pw_none);
-                        if(d.wariness.pw_none == 1) toggleWariness(document.getElementById('pw_none'));
                         setCheck('pw_asb', d.wariness.pw_asb); setCheck('pw_wn', d.wariness.pw_wn);
                         setCheck('pw_mani', d.wariness.pw_mani); setCheck('pw_sad', d.wariness.pw_sad);
                         setCheck('pw_dds', d.wariness.pw_dds); setCheck('pw_pd', d.wariness.pw_pd);
@@ -214,28 +220,31 @@
             });
         }
 
-        // 🚀 修改：點選「無疾病」時清空清單，但不禁用
+        // 🚀 修改：點選「無疾病」時清空清單與文字框
         function toggleHealthy(checkbox) {
             if (checkbox.checked) {
                 const list = document.querySelectorAll('#sick-list input[type="checkbox"]');
                 list.forEach(el => { el.checked = false; });
+                document.getElementById('ps_other').value = ''; // 清空文字框
             }
         }
 
-        // 🚀 新增：點選清單中任何一項，自動取消「無疾病」勾選
+        // 🚀 修改：點選清單或輸入文字時，自動取消「無疾病」
         function onSickItemChange() {
             document.getElementById('ps_none').checked = false;
         }
 
-        // 🚀 修改：點選「無須注意」時清空清單，但不禁用
+        // 🚀 修改：點選「無須注意」時清空清單與文字框
         function toggleWariness(checkbox) {
             if (checkbox.checked) {
                 const list = document.querySelectorAll('#wariness-list input[type="checkbox"]');
                 list.forEach(el => { el.checked = false; });
+                document.getElementById('pw_bwa').value = ''; // 清空文字框
+                document.getElementById('pw_other').value = ''; // 清空文字框
             }
         }
 
-        // 🚀 新增：點選清單中任何一項，自動取消「無須注意」勾選
+        // 🚀 修改：點選清單或輸入文字時，自動取消「無須注意」
         function onWarinessItemChange() {
             document.getElementById('pw_none').checked = false;
         }
@@ -249,15 +258,17 @@
             btn.disabled = true; btn.innerText = '儲存中...';
 
             const getCheck = (id) => document.getElementById(id).checked ? 1 : 0;
+            const getVal = (id) => document.getElementById(id).value.trim();
             
-            // 🚀 存檔邏輯優化：偵測清單勾選狀態
+            // 🚀 存檔判定：包含文字欄位
             const sickCheckIds = ['ps_ckd','ps_ntds','ps_rv','ps_oa','ps_dl','ps_hi','ps_vi','ps_hwd','ps_gi','ps_cdv','ps_piv','ps_ad'];
             const warinessCheckIds = ['pw_asb','pw_wn','pw_mani','pw_sad','pw_dds','pw_pd'];
             
-            const anySick = sickCheckIds.some(id => getCheck(id) === 1);
-            const anyWariness = warinessCheckIds.some(id => getCheck(id) === 1);
+            // 檢查清單是否有勾選 OR 文字框有內容
+            const anySick = sickCheckIds.some(id => getCheck(id) === 1) || getVal('ps_other') !== '';
+            const anyWariness = warinessCheckIds.some(id => getCheck(id) === 1) || getVal('pw_bwa') !== '' || getVal('pw_other') !== '';
             
-            // 需求：如果清單都沒勾選，存檔時將「無」設為勾選
+            // 自動補正：若完全沒資料，存檔設為「無 (1)」
             let finalPsNone = getCheck('ps_none');
             if (!anySick) finalPsNone = 1;
             
@@ -269,22 +280,17 @@
             params += `&p_breeds=${encodeURIComponent(breeds)}&p_weight=${document.getElementById('p_weight').value}&p_birthday=${document.getElementById('p_birthday').value}`;
             params += `&p_ic=${encodeURIComponent(document.getElementById('p_ic').value)}&p_memo=${encodeURIComponent(document.getElementById('p_memo').value)}`;
             
-            // 使用最終判定後的 ps_none
             params += `&ps_none=${finalPsNone}`;
             sickCheckIds.forEach(id => { params += `&${id}=${getCheck(id)}`; });
-            params += `&ps_other=${encodeURIComponent(document.getElementById('ps_other').value)}`;
+            params += `&ps_other=${encodeURIComponent(getVal('ps_other'))}`;
 
-            // 使用最終判定後的 pw_none
             params += `&pw_none=${finalPwNone}`;
             warinessCheckIds.forEach(id => { params += `&${id}=${getCheck(id)}`; });
-            params += `&pw_bwa=${encodeURIComponent(document.getElementById('pw_bwa').value)}&pw_other=${encodeURIComponent(document.getElementById('pw_other').value)}`;
+            params += `&pw_bwa=${encodeURIComponent(getVal('pw_bwa'))}&pw_other=${encodeURIComponent(getVal('pw_other'))}`;
 
             fetch(GAS_URL + params).then(res => res.json()).then(result => {
                 if (result.status === 'success') { alert('儲存成功！'); location.reload(); }
-            }).catch(err => {
-                alert('連線失敗');
-                btn.disabled = false; btn.innerText = '確認儲存';
-            });
+            }).catch(err => { alert('連線失敗'); btn.disabled = false; btn.innerText = '確認儲存'; });
         }
 
         function switchTab(t) {
