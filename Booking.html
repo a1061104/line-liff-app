@@ -150,25 +150,35 @@
         }
 
         function loadUserPets() {
-            fetch(GAS_URL + `?action=pet_query_list&u_id=${encodeURIComponent(currentUserId)}`)
-            .then(res => res.json())
-            .then(result => {
-                document.getElementById('loading-mask').style.display = 'none';
-                const select = document.getElementById('pet_select');
-                select.innerHTML = '';
-                if (result.status === 'success' && result.data.length > 0) {
-                    result.data.forEach(pet => {
-                        select.add(new Option(pet.p_name, pet.p_id));
-                    });
-                } else {
-                    select.add(new Option("無寵物資料", ""));
-                }
-            })
-            .catch(err => {
-                document.getElementById('loading-mask').style.display = 'none';
-                alert('讀取失敗，請重新整理');
-            });
-        }
+        fetch(GAS_URL + `?action=pet_query_list&u_id=${encodeURIComponent(currentUserId)}`)
+        .then(res => res.json())
+        .then(result => {
+            document.getElementById('loading-mask').style.display = 'none';
+            const select = document.getElementById('pet_select');
+            select.innerHTML = '';
+
+            // 🚀 修改邏輯：檢查是否有寵物資料
+            if (result.status === 'success' && result.data.length > 0) {
+                // 情境 1：有寵物資料，正常填充選單
+                result.data.forEach(pet => {
+                    select.add(new Option(pet.p_name, pet.p_id));
+                });
+            } else {
+                // 情境 2：沒有寵物資料 
+                // 彈出視窗提示並跳轉
+                alert('⚠️ 系統偵測到您尚未建立毛小孩檔案，請先完成建檔再進行預約。');
+                
+                // 跳轉回會員中心 (index.html)
+                // 註：若在 GitHub Pages 運行，路徑會指向同目錄下的 index.html
+                window.location.href = 'index.html';
+            }
+        })
+        .catch(err => {
+            document.getElementById('loading-mask').style.display = 'none';
+            alert('讀取寵物資料失敗，請重新整理頁面');
+            console.error('Error loading pets:', err);
+        });
+    }
 
         function submitReservation() {
             const petSelect = document.getElementById('pet_select');
@@ -239,3 +249,4 @@
     </script>
 </body>
 </html>
+
