@@ -3,37 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>寵物資料建檔</title>
+    <title>寵物資料管理</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; background-color: #f5f5f5; padding: 15px; margin: 0; }
         .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; }
-        h3 { text-align: center; color: #333; margin-top: 0; }
+        h3 { text-align: center; color: #333; margin-top: 0; margin-bottom: 20px; }
+        
+        /* 區塊標題樣式 */
+        .section-title { background-color: #06c755; color: white; padding: 8px 15px; border-radius: 5px; margin: 25px 0 15px 0; font-weight: bold; display: flex; align-items: center; }
+        .section-title:first-of-type { margin-top: 0; }
+        
         .pet-controls { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 20px; background-color: #e8f5e9; padding: 15px; border-radius: 8px; border: 1px solid #c8e6c9; }
         .pet-select-wrapper { flex-grow: 1; position: relative; }
         .pet-select-wrapper label { font-weight: bold; color: #2e7d32; display: block; margin-bottom: 5px; font-size: 14px; }
         .btn-add-new { flex-shrink: 0; background-color: #ff9800; color: white; border: none; padding: 10px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; height: 44px; display: flex; align-items: center; }
-        .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
-        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: #666; font-weight: bold; }
-        .tab.active { color: #06c755; border-bottom: 2px solid #06c755; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #555; }
         .form-control, .form-select { width: 100%; padding: 0 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; background-color: #fff; height: 44px; line-height: 42px; appearance: none; -webkit-appearance: none; }
         .form-select { background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 10px center; background-size: 16px; color: #333; }
         
         .disease-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .checkbox-item { display: flex; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #eee; box-sizing: border-box;}
+        .checkbox-item { display: flex; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #eee; height: 100%; box-sizing: border-box;}
         .checkbox-item input { margin-right: 10px; width: 20px; height: 20px; flex-shrink: 0; }
         
-        /* 🚀 修改：說明欄位樣式調整，寬度縮減 */
         .memo-container { grid-column: span 2; border: 1px solid #eee; padding: 12px; border-radius: 8px; background: #fff; }
         .memo-header { display: flex; align-items: center; margin-bottom: 8px; }
         .memo-header input { margin-right: 10px; width: 20px; height: 20px; }
         .memo-input { width: 85%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; display: block; margin-left: 30px; }
 
-        .btn { width: 100%; padding: 14px; background-color: #06c755; color: white; border: none; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .btn { width: 100%; padding: 14px; background-color: #06c755; color: white; border: none; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 30px; }
         #loading-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 999; }
         #mode-label { font-size: 12px; color: #666; text-align: right; margin-top: -15px; margin-bottom: 10px; display: none;}
         .readonly-check { pointer-events: none; opacity: 0.8; }
@@ -45,6 +45,7 @@
 
     <div class="container">
         <h3>🐶 寵物資料管理 🐱</h3>
+        
         <div class="pet-controls">
             <div class="pet-select-wrapper">
                 <label>維護既有寵物：</label>
@@ -56,13 +57,8 @@
         </div>
         <div id="mode-label">目前模式：<span id="current-mode-text" style="font-weight:bold; color:#06c755;">編輯中</span></div>
 
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('basic')">基本資料</div>
-            <div class="tab" onclick="switchTab('sick')">健康狀況</div>
-            <div class="tab" onclick="switchTab('wariness')">注意事項</div>
-        </div>
-
-        <div id="tab-basic" class="tab-content active">
+        <div class="section-title">📂 基本資料</div>
+        <div id="section-basic">
             <input type="hidden" id="current_p_id" value="">
             <div class="form-group"><label>寵物名稱 <span style="color:red">*</span></label><input type="text" id="p_name" class="form-control"></div>
             <div class="form-group" style="display:flex; gap:10px;">
@@ -76,7 +72,8 @@
             <div class="form-group"><label>備註</label><textarea id="p_memo" class="form-control" style="height:60px;"></textarea></div>
         </div>
 
-        <div id="tab-sick" class="tab-content">
+        <div class="section-title">🏥 健康狀況</div>
+        <div id="section-sick">
             <div class="form-group">
                 <label style="color:#e74c3c;">是否有以下病史？(可複選)</label>
                 <div class="checkbox-item" style="margin-bottom:12px; background:#fff3e0;">
@@ -117,7 +114,8 @@
             </div>
         </div>
 
-        <div id="tab-wariness" class="tab-content">
+        <div class="section-title">⚠️ 注意事項</div>
+        <div id="section-wariness">
             <div class="form-group">
                 <label style="color:#e67e22;">美容/住宿注意事項 (可複選)</label>
                 <div class="checkbox-item" style="margin-bottom:12px; background:#fff3e0;"><input type="checkbox" id="pw_none" onchange="toggleWariness(this)"><label for="pw_none" style="margin:0; width:100%; font-weight:bold;">✅ 無須注意事項</label></div>
@@ -139,8 +137,9 @@
                     </div>
                 </div>
             </div>
-            <button id="btn-save" class="btn" onclick="savePet()">確認儲存</button>
         </div>
+
+        <button id="btn-save" class="btn" onclick="savePet()">確認儲存</button>
     </div>
 
     <script>
@@ -221,7 +220,6 @@
                         const setV = (id, v) => { document.getElementById(id).value = v || ''; };
                         setC('pw_none', d.wariness.pw_none); setC('pw_asb', d.wariness.pw_asb); setC('pw_wn', d.wariness.pw_wn); setC('pw_mani', d.wariness.pw_mani); setC('pw_sad', d.wariness.pw_sad); setC('pw_dds', d.wariness.pw_dds); setC('pw_pd', d.wariness.pw_pd); setC('pw_bwa', d.wariness.pw_bwa); setV('pw_bwa_memo', d.wariness.pw_bwa_memo); setC('pw_other', d.wariness.pw_other); setV('pw_other_memo', d.wariness.pw_other_memo);
                     }
-                    switchTab('basic');
                 }
             });
         }
@@ -250,8 +248,7 @@
             fetch(GAS_URL + params).then(res => res.json()).then(result => { if (result.status === 'success') { alert('儲存成功！'); location.reload(); } }).catch(err => { alert('連線失敗'); btn.disabled = false; btn.innerText = '確認儲存'; });
         }
 
-        function switchTab(t) { document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active')); const idx = t==='basic'?1:t==='sick'?2:3; document.querySelector(`.tab:nth-child(${idx})`).classList.add('active'); document.getElementById(`tab-${t}`).classList.add('active'); }
-        function switchToNewPetMode() { document.getElementById('current_p_id').value = ''; document.querySelectorAll('input[type=text], input[type=date], input[type=number], textarea').forEach(el => el.value = ''); document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false); document.getElementById('pet-select').value = ""; renderBreedsOptions(); updateModeLabel(true); switchTab('basic'); }
+        function switchToNewPetMode() { document.getElementById('current_p_id').value = ''; document.querySelectorAll('input[type=text], input[type=date], input[type=number], textarea').forEach(el => el.value = ''); document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false); document.getElementById('pet-select').value = ""; renderBreedsOptions(); updateModeLabel(true); window.scrollTo(0,0); }
         function updateModeLabel(isNew) { const label = document.getElementById('mode-label'), text = document.getElementById('current-mode-text'); label.style.display = 'block'; text.innerText = isNew ? '新增模式' : '維護模式'; text.style.color = isNew ? '#ff9800' : '#06c755'; document.getElementById('btn-save').innerText = isNew ? '確認新增' : '儲存修改'; }
         function onPetSelectChange() { const id = document.getElementById('pet-select').value; if (id) { loadPetDetail(id); updateModeLabel(false); } }
     </script>
