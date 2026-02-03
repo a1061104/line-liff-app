@@ -14,6 +14,9 @@
         .form-group { margin-bottom: 20px; text-align: left; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; font-size: 14px; }
         
+        /* 🚀 新增：組合輸入框佈局 (用於選單+按鈕) */
+        .input-group { display: flex; gap: 10px; align-items: center; }
+
         .form-control, .form-select { 
             width: 100%; height: 48px; padding: 0 12px; border: 1px solid #ddd; 
             border-radius: 8px; box-sizing: border-box; font-size: 16px; 
@@ -21,17 +24,19 @@
             -webkit-appearance: none; appearance: none; display: block; line-height: 48px; 
         }
 
-        /* 隱藏預設圖示 */
-        input[type="date"]::-webkit-calendar-picker-indicator,
-        input[type="time"]::-webkit-calendar-picker-indicator { display: none !important; -webkit-appearance: none; }
-        input[type="date"], input[type="time"] { background-image: none; }
-
         .form-select {
             background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23d81b60%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat; background-position: right 12px top 50%; background-size: 12px auto; padding-right: 30px;
         }
-        .form-control:focus, .form-select:focus { border-color: #d81b60; box-shadow: 0 0 0 2px rgba(216, 27, 96, 0.1); }
         
+        /* 🚀 新增：小按鈕樣式 */
+        .btn-small { 
+            height: 48px; white-space: nowrap; background-color: #ff9800; color: white; border: none; 
+            border-radius: 8px; padding: 0 15px; font-size: 14px; cursor: pointer; font-weight: bold; 
+            flex-shrink: 0; transition: background-color 0.2s;
+        }
+        .btn-small:active { background-color: #e68a00; }
+
         .btn { width: 100%; padding: 14px; background-color: #d81b60; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; margin-top: 15px; -webkit-tap-highlight-color: transparent; }
         .btn:active { background-color: #ad1457; }
         .btn:disabled { background-color: #f48fb1; cursor: not-allowed; }
@@ -49,7 +54,12 @@
         
         <div class="form-group">
             <label>選擇寵物</label>
-            <select id="pet_select" class="form-select"><option value="">讀取中...</option></select>
+            <div class="input-group">
+                <select id="pet_select" class="form-select">
+                    <option value="">讀取中...</option>
+                </select>
+                <button type="button" class="btn-small" onclick="location.href='Pet.html'">建立毛小孩</button>
+            </div>
         </div>
 
         <div class="form-group">
@@ -85,12 +95,10 @@
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
         let currentUserId = '';
 
-        // 全域變數：儲存動態抓到的營業時間 (預設值僅供參考)
         let g_openTime = "09:00"; 
         let g_closeTime = "21:00";
 
         window.onload = function() {
-            // 修正日期預設為明天 (當地時間)
             const dateInput = document.getElementById('r_date');
             const now = new Date();
             const tomorrow = new Date(now);
@@ -102,7 +110,6 @@
             dateInput.min = `${year}-${month}-${day}`;
             dateInput.value = dateInput.min;
 
-            // 🚀 啟動時：載入設定、載入美容師
             loadSettings();     
             loadBeauticians();
 
@@ -112,24 +119,20 @@
             }).catch(err => { console.error('LIFF Init Error', err); });
         };
 
-        // 🚀 1. 抓取營業時間設定
         function loadSettings() {
             fetch(GAS_URL + `?action=reservation_get_settings`)
             .then(res => res.json())
             .then(result => {
                 if (result.status === 'success') {
                     const config = result.data;
-                    g_openTime = config.OPEN_HOUR;   // 例如 "09:30"
-                    g_closeTime = config.CLOSE_HOUR; // 例如 "21:00"
-                    
-                    // 更新畫面上顯示的文字
+                    g_openTime = config.OPEN_HOUR;   
+                    g_closeTime = config.CLOSE_HOUR; 
                     document.getElementById('time-hint').innerText = `(請依營業時間填寫 ${g_openTime}~${g_closeTime})`;
                 }
             })
             .catch(err => console.error("讀取設定失敗", err));
         }
 
-        // 🚀 2. 抓取美容師清單
         function loadBeauticians() {
             fetch(GAS_URL + `?action=reservation_beautician_list`)
             .then(res => res.json())
@@ -150,35 +153,27 @@
         }
 
         function loadUserPets() {
-        fetch(GAS_URL + `?action=pet_query_list&u_id=${encodeURIComponent(currentUserId)}`)
-        .then(res => res.json())
-        .then(result => {
-            document.getElementById('loading-mask').style.display = 'none';
-            const select = document.getElementById('pet_select');
-            select.innerHTML = '';
-
-            // 🚀 修改邏輯：檢查是否有寵物資料
-            if (result.status === 'success' && result.data.length > 0) {
-                // 情境 1：有寵物資料，正常填充選單
-                result.data.forEach(pet => {
-                    select.add(new Option(pet.p_name, pet.p_id));
-                });
-            } else {
-                // 情境 2：沒有寵物資料 
-                // 彈出視窗提示並跳轉
-                alert('⚠️ 系統偵測到您尚未建立毛小孩檔案，請先完成建檔再進行預約。');
-                
-                // 跳轉回會員中心 (index.html)
-                // 註：若在 GitHub Pages 運行，路徑會指向同目錄下的 index.html
-                window.location.href = 'index.html';
-            }
-        })
-        .catch(err => {
-            document.getElementById('loading-mask').style.display = 'none';
-            alert('讀取寵物資料失敗，請重新整理頁面');
-            console.error('Error loading pets:', err);
-        });
-    }
+            fetch(GAS_URL + `?action=pet_query_list&u_id=${encodeURIComponent(currentUserId)}`)
+            .then(res => res.json())
+            .then(result => {
+                document.getElementById('loading-mask').style.display = 'none';
+                const select = document.getElementById('pet_select');
+                select.innerHTML = '';
+                if (result.status === 'success' && result.data.length > 0) {
+                    result.data.forEach(pet => {
+                        select.add(new Option(pet.p_name, pet.p_id));
+                    });
+                } else {
+                    select.add(new Option("無寵物資料", ""));
+                    // 🚀 如果沒有資料，也可以維持原本的提示邏輯
+                    alert('⚠️ 偵測到您尚未建立毛小孩檔案，請點擊「建立毛小孩」按鈕進行新增。');
+                }
+            })
+            .catch(err => {
+                document.getElementById('loading-mask').style.display = 'none';
+                alert('讀取失敗，請重新整理');
+            });
+        }
 
         function submitReservation() {
             const petSelect = document.getElementById('pet_select');
@@ -193,11 +188,10 @@
             const time = document.getElementById('r_time').value;
             const service = document.getElementById('r_service').value;
 
-            if (!p_id || p_id === "") { alert('請選擇寵物'); return; }
+            if (!p_id || p_id === "" || p_id === "無寵物資料") { alert('請先建立並選擇寵物'); return; }
             if (!date) { alert('請選擇日期'); return; }
             if (!time) { alert('請選擇時間'); return; }
 
-            // 🚀 3. 使用動態抓取的時間進行前端卡控
             const [h, m] = time.split(':').map(Number);
             const userTotalMins = h * 60 + m;
 
@@ -249,4 +243,3 @@
     </script>
 </body>
 </html>
-
