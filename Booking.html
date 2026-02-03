@@ -14,7 +14,7 @@
         .form-group { margin-bottom: 20px; text-align: left; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; font-size: 14px; }
         
-        /* 🚀 新增：組合輸入框佈局 (用於選單+按鈕) */
+        /* 🚀 組合輸入框佈局 (用於選單+按鈕) */
         .input-group { display: flex; gap: 10px; align-items: center; }
 
         .form-control, .form-select { 
@@ -29,7 +29,7 @@
             background-repeat: no-repeat; background-position: right 12px top 50%; background-size: 12px auto; padding-right: 30px;
         }
         
-        /* 🚀 新增：小按鈕樣式 */
+        /* 🚀 小按鈕樣式 */
         .btn-small { 
             height: 48px; white-space: nowrap; background-color: #ff9800; color: white; border: none; 
             border-radius: 8px; padding: 0 15px; font-size: 14px; cursor: pointer; font-weight: bold; 
@@ -159,19 +159,22 @@
                 document.getElementById('loading-mask').style.display = 'none';
                 const select = document.getElementById('pet_select');
                 select.innerHTML = '';
+                
+                // 🚀 新增邏輯：判斷寵物資料長度
                 if (result.status === 'success' && result.data.length > 0) {
+                    // 有寵物資料，正常載入
                     result.data.forEach(pet => {
                         select.add(new Option(pet.p_name, pet.p_id));
                     });
                 } else {
-                    select.add(new Option("無寵物資料", ""));
-                    // 🚀 如果沒有資料，也可以維持原本的提示邏輯
-                    alert('⚠️ 偵測到您尚未建立毛小孩檔案，請點擊「建立毛小孩」按鈕進行新增。');
+                    // 無寵物資料，直接跳轉回會員中心 (index.html)
+                    alert('⚠️ 系統偵測到您尚未建立毛小孩檔案，請先完成建檔再進行預約。');
+                    window.location.href = 'index.html';
                 }
             })
             .catch(err => {
                 document.getElementById('loading-mask').style.display = 'none';
-                alert('讀取失敗，請重新整理');
+                alert('讀取資料失敗，請重新整理');
             });
         }
 
@@ -188,7 +191,7 @@
             const time = document.getElementById('r_time').value;
             const service = document.getElementById('r_service').value;
 
-            if (!p_id || p_id === "" || p_id === "無寵物資料") { alert('請先建立並選擇寵物'); return; }
+            if (!p_id || p_id === "") { alert('請先建立並選擇寵物'); return; }
             if (!date) { alert('請選擇日期'); return; }
             if (!time) { alert('請選擇時間'); return; }
 
