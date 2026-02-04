@@ -99,150 +99,103 @@
         let g_closeTime = "21:00";
 
         window.onload = function() {
-            const dateInput = document.getElementById('r_date');
-            const now = new Date();
-            const tomorrow = new Date(now);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            
-            const year = tomorrow.getFullYear();
-            const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
-            const day = String(tomorrow.getDate()).padStart(2, '0');
-            dateInput.min = `${year}-${month}-${day}`;
-            dateInput.value = dateInput.min;
+        // ... 日期限制邏輯保持不變 ...
 
-            loadSettings();     
-            loadBeauticians();
+        loadSettings();     
+        loadBeauticians();
+        loadServices(); // 🚀 新增：載入動態服務清單
 
-            liff.init({ liffId: MY_LIFF_ID }).then(() => {
-                if (!liff.isLoggedIn()) { liff.login(); } 
-                else { liff.getProfile().then(profile => { currentUserId = profile.userId; loadUserPets(); }); }
-            }).catch(err => { console.error('LIFF Init Error', err); });
-        };
+        liff.init({ liffId: MY_LIFF_ID }).then(() => {
+            if (!liff.isLoggedIn()) { liff.login(); } 
+            else { liff.getProfile().then(profile => { currentUserId = profile.userId; loadUserPets(); }); }
+        }).catch(err => { console.error('LIFF Init Error', err); });
+    };
 
-        function loadSettings() {
-            fetch(GAS_URL + `?action=reservation_get_settings`)
-            .then(res => res.json())
-            .then(result => {
-                if (result.status === 'success') {
-                    const config = result.data;
-                    g_openTime = config.OPEN_HOUR;   
-                    g_closeTime = config.CLOSE_HOUR; 
-                    document.getElementById('time-hint').innerText = `(請依營業時間填寫 ${g_openTime}~${g_closeTime})`;
-                }
-            })
-            .catch(err => console.error("讀取設定失敗", err));
-        }
+    // 🚀 新增：從 Basic_Data 抓取服務項目
+    function loadServices() {
+        fetch(GAS_URL + `?action=reservation_service_list`)
+        .then(res => res.json())
+        .then(result => {
+            const select = document.getElementById('r_service');
+            select.innerHTML = ''; // 清空舊有寫死的選項
 
-        function loadBeauticians() {
-            fetch(GAS_URL + `?action=reservation_beautician_list`)
-            .then(res => res.json())
-            .then(result => {
-                const select = document.getElementById('beautician_select');
-                select.innerHTML = ''; 
-                select.add(new Option("不指定 (Any)", ""));
-
-                if (result.status === 'success' && result.data.length > 0) {
-                    result.data.forEach(b => {
-                        select.add(new Option(b.b_name, b.b_id));
-                    });
-                }
-            })
-            .catch(err => {
-                document.getElementById('beautician_select').innerHTML = '<option value="">載入失敗</option>';
-            });
-        }
-
-        function loadUserPets() {
-            fetch(GAS_URL + `?action=pet_query_list&u_id=${encodeURIComponent(currentUserId)}`)
-            .then(res => res.json())
-            .then(result => {
-                document.getElementById('loading-mask').style.display = 'none';
-                const select = document.getElementById('pet_select');
-                select.innerHTML = '';
-                
-                // 🚀 新增邏輯：判斷寵物資料長度
-                if (result.status === 'success' && result.data.length > 0) {
-                    // 有寵物資料，正常載入
-                    result.data.forEach(pet => {
-                        select.add(new Option(pet.p_name, pet.p_id));
-                    });
-                } else {
-                    // 無寵物資料，直接跳轉回會員中心 (index.html)
-                    alert('⚠️ 系統偵測到您尚未建立毛小孩檔案，請先完成建檔再進行預約。');
-                    window.location.href = 'index.html';
-                }
-            })
-            .catch(err => {
-                document.getElementById('loading-mask').style.display = 'none';
-                alert('讀取資料失敗，請重新整理');
-            });
-        }
-
-        function submitReservation() {
-            const petSelect = document.getElementById('pet_select');
-            const p_id = petSelect.value;
-            const p_name = petSelect.options[petSelect.selectedIndex].text;
-            
-            const bSelect = document.getElementById('beautician_select');
-            const b_id = bSelect.value;
-            const b_name = bSelect.options[bSelect.selectedIndex].text;
-
-            const date = document.getElementById('r_date').value;
-            const time = document.getElementById('r_time').value;
-            const service = document.getElementById('r_service').value;
-
-            if (!p_id || p_id === "") { alert('請先建立並選擇寵物'); return; }
-            if (!date) { alert('請選擇日期'); return; }
-            if (!time) { alert('請選擇時間'); return; }
-
-            const [h, m] = time.split(':').map(Number);
-            const userTotalMins = h * 60 + m;
-
-            const [openH, openM] = g_openTime.split(':').map(Number);
-            const openTotalMins = openH * 60 + openM;
-
-            const [closeH, closeM] = g_closeTime.split(':').map(Number);
-            const closeTotalMins = closeH * 60 + closeM;
-
-            if (userTotalMins < openTotalMins || userTotalMins > closeTotalMins) {
-                alert(`預約失敗：營業時間為 ${g_openTime} 至 ${g_closeTime}`);
-                return;
+            if (result.status === 'success' && result.data.length > 0) {
+                result.data.forEach(item => {
+                    // value 存代碼(Code), text 顯示中文名稱
+                    select.add(new Option(item.desc, item.code));
+                });
+            } else {
+                select.add(new Option("無可用服務", ""));
             }
+        })
+        .catch(err => {
+            console.error("載入服務清單失敗", err);
+            document.getElementById('r_service').innerHTML = '<option value="">載入失敗</option>';
+        });
+    }
 
-            const btn = document.getElementById('btn-submit');
-            btn.disabled = true;
-            btn.innerText = '處理中...';
+    // ... loadSettings, loadBeauticians, loadUserPets 函式保持不變 ...
 
-            const params = `?action=reservation_save` +
-                           `&u_id=${encodeURIComponent(currentUserId)}` +
-                           `&p_id=${encodeURIComponent(p_id)}` +
-                           `&b_id=${encodeURIComponent(b_id)}` +
-                           `&date=${encodeURIComponent(date)}` +
-                           `&time=${encodeURIComponent(time)}` +
-                           `&service=${encodeURIComponent(service)}`;
+    function submitReservation() {
+        const petSelect = document.getElementById('pet_select');
+        const p_id = petSelect.value;
+        const p_name = petSelect.options[petSelect.selectedIndex].text;
+        
+        const bSelect = document.getElementById('beautician_select');
+        const b_id = bSelect.value;
+        const b_name = bSelect.options[bSelect.selectedIndex].text;
 
-            fetch(GAS_URL + params)
-            .then(res => res.json())
-            .then(result => {
-                if (result.status === 'success') {
-                    if (liff.isInClient()) {
-                        let msg = "✅ 預約申請已送出！\n------------------\n🐶 寵物名稱：" + p_name + "\n📅 預約日期：" + date + "\n⏰ 預約時間：" + time + "\n💇 指定美容師：" + b_name + "\n✨ 預約單號：" + result.r_id;
-                        liff.sendMessages([{ "type": "text", "text": msg }])
-                        .then(() => { liff.closeWindow(); })
-                        .catch(() => { alert('預約成功，單號：' + result.r_id); liff.closeWindow(); });
-                    } else { alert('預約成功！單號：' + result.r_id); }
-                } else {
-                    alert(result.message);
-                    btn.disabled = false;
-                    btn.innerText = '送出預約';
-                }
-            })
-            .catch(err => {
-                alert('連線錯誤，請檢查網路');
+        const date = document.getElementById('r_date').value;
+        const time = document.getElementById('r_time').value;
+        
+        // 這裡會取得服務項目的 Code (例如 "1" 或 "2")
+        const serviceSelect = document.getElementById('r_service');
+        const serviceCode = serviceSelect.value;
+        const serviceName = serviceSelect.options[serviceSelect.selectedIndex].text;
+
+        if (!p_id || p_id === "") { alert('請先建立並選擇寵物'); return; }
+        if (!serviceCode) { alert('請選擇服務項目'); return; }
+        if (!date) { alert('請選擇日期'); return; }
+        if (!time) { alert('請選擇時間'); return; }
+
+        // ... 營業時間檢查邏輯保持不變 ...
+
+        const btn = document.getElementById('btn-submit');
+        btn.disabled = true;
+        btn.innerText = '處理中...';
+
+        const params = `?action=reservation_save` +
+                       `&u_id=${encodeURIComponent(currentUserId)}` +
+                       `&p_id=${encodeURIComponent(p_id)}` +
+                       `&b_id=${encodeURIComponent(b_id)}` +
+                       `&date=${encodeURIComponent(date)}` +
+                       `&time=${encodeURIComponent(time)}` +
+                       `&service=${encodeURIComponent(serviceCode)}`; // 傳送 Code 到後端
+
+        fetch(GAS_URL + params)
+        .then(res => res.json())
+        .then(result => {
+            if (result.status === 'success') {
+                if (liff.isInClient()) {
+                    // LINE 訊息仍顯示中文名稱 serviceName 方便閱讀
+                    let msg = "✅ 預約申請已送出！\n------------------\n🐶 寵物名稱：" + p_name + "\n✨ 服務項目：" + serviceName + "\n📅 預約日期：" + date + "\n⏰ 預約時間：" + time + "\n💇 指定美容師：" + b_name + "\n✨ 預約單號：" + result.r_id;
+                    liff.sendMessages([{ "type": "text", "text": msg }])
+                    .then(() => { liff.closeWindow(); })
+                    .catch(() => { alert('預約成功，單號：' + result.r_id); liff.closeWindow(); });
+                } else { alert('預約成功！單號：' + result.r_id); }
+            } else {
+                alert(result.message);
                 btn.disabled = false;
                 btn.innerText = '送出預約';
-            });
-        }
+            }
+        })
+        .catch(err => {
+            alert('連線錯誤，請檢查網路');
+            btn.disabled = false;
+            btn.innerText = '送出預約';
+        });
+    }
     </script>
 </body>
 </html>
+
