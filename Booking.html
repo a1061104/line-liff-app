@@ -74,7 +74,7 @@
 
         <div class="form-group">
             <label>預約時間 <span id="time-hint" style="font-weight:normal; font-size:0.95em; color:#d81b60;">(請依營業時間填寫)</span></label>
-            <input type="time" id="r_time" class="form-control">
+            <input type="time" id="r_time" class="form-control" step="600">
         </div>
 
         <div class="form-group">
@@ -109,7 +109,7 @@
 
             loadSettings();     
             loadBeauticians();
-            loadServices(); // 🚀 新增：載入動態服務選單
+            loadServices(); 
 
             liff.init({ liffId: MY_LIFF_ID }).then(() => {
                 if (!liff.isLoggedIn()) { liff.login(); } 
@@ -125,7 +125,8 @@
                     const config = result.data;
                     g_openTime = config.OPEN_HOUR;   
                     g_closeTime = config.CLOSE_HOUR; 
-                    document.getElementById('time-hint').innerText = `(請依營業時間填寫 ${g_openTime}~${g_closeTime})`;
+                    // 🚀 修改：提示文字加入「以10分為單位」
+                    document.getElementById('time-hint').innerText = `(請依營業時間填寫 ${g_openTime}~${g_closeTime}，以10分為單位)`;
                 }
             })
             .catch(err => console.error("讀取設定失敗", err));
@@ -150,17 +151,15 @@
             });
         }
 
-        // 🚀 新增：讀取 Basic_Data 服務清單
         function loadServices() {
             fetch(GAS_URL + `?action=reservation_service_list`)
             .then(res => res.json())
             .then(result => {
                 const select = document.getElementById('r_service');
-                select.innerHTML = ''; // 清空預設的 "讀取中..."
+                select.innerHTML = ''; 
                 
                 if (result.status === 'success' && result.data.length > 0) {
                     result.data.forEach(srv => {
-                        // 顯示：Code_Desc (srv.name), 值：Code (srv.code)
                         select.add(new Option(srv.name, srv.code));
                     });
                 } else {
@@ -208,9 +207,8 @@
             const date = document.getElementById('r_date').value;
             const time = document.getElementById('r_time').value;
             
-            // 🚀 服務項目現在是動態的，取得 Code
             const sSelect = document.getElementById('r_service');
-            const serviceCode = sSelect.value; // 這會是 Basic_Data 的 Code (例如 "1")
+            const serviceCode = sSelect.value; 
             
             if (!p_id || p_id === "") { alert('請先建立並選擇寵物'); return; }
             if (!date) { alert('請選擇日期'); return; }
@@ -218,6 +216,13 @@
             if (!serviceCode) { alert('請選擇服務項目'); return; }
 
             const [h, m] = time.split(':').map(Number);
+            
+            // 🚀 修改：新增 10分鐘單位 檢核
+            if (m % 10 !== 0) {
+                alert('時間格式錯誤：分鐘數請以 10 為單位 (例如 10:00, 10:10, 10:20...)');
+                return;
+            }
+
             const userTotalMins = h * 60 + m;
 
             const [openH, openM] = g_openTime.split(':').map(Number);
@@ -235,7 +240,6 @@
             btn.disabled = true;
             btn.innerText = '處理中...';
 
-            // 將 serviceCode 傳給後端
             const params = `?action=reservation_save` +
                            `&u_id=${encodeURIComponent(currentUserId)}` +
                            `&p_id=${encodeURIComponent(p_id)}` +
