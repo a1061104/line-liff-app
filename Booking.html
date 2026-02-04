@@ -80,10 +80,7 @@
         <div class="form-group">
             <label>服務項目</label>
             <select id="r_service" class="form-select">
-                <option value="洗澡">🛁 洗澡 (Bath)</option>
-                <option value="大美容">✂️ 大美容 (Full Grooming)</option>
-                <option value="住宿">🏠 住宿 (Hotel)</option>
-                <option value="安親">🧸 安親 (Day Care)</option>
+                <option value="">讀取中...</option>
             </select>
         </div>
 
@@ -112,6 +109,7 @@
 
             loadSettings();     
             loadBeauticians();
+            loadServices(); // 🚀 新增：載入動態服務選單
 
             liff.init({ liffId: MY_LIFF_ID }).then(() => {
                 if (!liff.isLoggedIn()) { liff.login(); } 
@@ -152,6 +150,29 @@
             });
         }
 
+        // 🚀 新增：讀取 Basic_Data 服務清單
+        function loadServices() {
+            fetch(GAS_URL + `?action=reservation_service_list`)
+            .then(res => res.json())
+            .then(result => {
+                const select = document.getElementById('r_service');
+                select.innerHTML = ''; // 清空預設的 "讀取中..."
+                
+                if (result.status === 'success' && result.data.length > 0) {
+                    result.data.forEach(srv => {
+                        // 顯示：Code_Desc (srv.name), 值：Code (srv.code)
+                        select.add(new Option(srv.name, srv.code));
+                    });
+                } else {
+                    select.add(new Option("無法載入服務項目", ""));
+                }
+            })
+            .catch(err => {
+                console.error('Load Services Error', err);
+                document.getElementById('r_service').innerHTML = '<option value="">載入失敗</option>';
+            });
+        }
+
         function loadUserPets() {
             fetch(GAS_URL + `?action=pet_query_list&u_id=${encodeURIComponent(currentUserId)}`)
             .then(res => res.json())
@@ -160,14 +181,11 @@
                 const select = document.getElementById('pet_select');
                 select.innerHTML = '';
                 
-                // 🚀 新增邏輯：判斷寵物資料長度
                 if (result.status === 'success' && result.data.length > 0) {
-                    // 有寵物資料，正常載入
                     result.data.forEach(pet => {
                         select.add(new Option(pet.p_name, pet.p_id));
                     });
                 } else {
-                    // 無寵物資料，直接跳轉回會員中心 (index.html)
                     alert('⚠️ 系統偵測到您尚未建立毛小孩檔案，請先完成建檔再進行預約。');
                     window.location.href = 'index.html';
                 }
@@ -189,11 +207,15 @@
 
             const date = document.getElementById('r_date').value;
             const time = document.getElementById('r_time').value;
-            const service = document.getElementById('r_service').value;
-
+            
+            // 🚀 服務項目現在是動態的，取得 Code
+            const sSelect = document.getElementById('r_service');
+            const serviceCode = sSelect.value; // 這會是 Basic_Data 的 Code (例如 "1")
+            
             if (!p_id || p_id === "") { alert('請先建立並選擇寵物'); return; }
             if (!date) { alert('請選擇日期'); return; }
             if (!time) { alert('請選擇時間'); return; }
+            if (!serviceCode) { alert('請選擇服務項目'); return; }
 
             const [h, m] = time.split(':').map(Number);
             const userTotalMins = h * 60 + m;
@@ -213,13 +235,14 @@
             btn.disabled = true;
             btn.innerText = '處理中...';
 
+            // 將 serviceCode 傳給後端
             const params = `?action=reservation_save` +
                            `&u_id=${encodeURIComponent(currentUserId)}` +
                            `&p_id=${encodeURIComponent(p_id)}` +
                            `&b_id=${encodeURIComponent(b_id)}` +
                            `&date=${encodeURIComponent(date)}` +
                            `&time=${encodeURIComponent(time)}` +
-                           `&service=${encodeURIComponent(service)}`;
+                           `&service=${encodeURIComponent(serviceCode)}`;
 
             fetch(GAS_URL + params)
             .then(res => res.json())
