@@ -17,10 +17,7 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #555; }
         .form-control, .form-select { width: 100%; padding: 0 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; background-color: #fff; height: 44px; line-height: 42px; }
-        
-        /* 🚀 體型專用唯讀顯示樣式 */
         .readonly-display { background-color: #f9f9f9; color: #06c755; font-weight: bold; border: 1px solid #ccc; display: flex; align-items: center; }
-        
         .disease-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .checkbox-item { display: flex; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #eee; box-sizing: border-box;}
         .checkbox-item input { margin-right: 10px; width: 20px; height: 20px; flex-shrink: 0; }
@@ -117,7 +114,7 @@
 
     <script>
         const MY_LIFF_ID = '2008965576-txfwY86y'; 
-        const GAS_URL = '你的GAS部署網址'; // 🚀 請更換為您的網址
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbx_v01666oH0Dof8F1X0XvS0_W9z6u_XvS0_W9z6u_XvS0_W9z6/exec'; // 🚀 請確認此網址正確
         let currentUserId = '', allBreedsData = [];
 
         window.onload = function() {
@@ -192,7 +189,7 @@
                         document.getElementById('p_birthday').value = d.basic.p_birthday || '';
                         document.getElementById('p_ic').value = d.basic.p_ic || ''; 
                         document.getElementById('p_memo').value = d.basic.p_memo || '';
-                        updateSizeDisplay(); // 載入時同步顯示體型
+                        updateSizeDisplay(); // 載入資料後即時判定
                     }
                     if(d.sick) {
                         const setC = (id, v) => { document.getElementById(id).checked = (v == 1); };
