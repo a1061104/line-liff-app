@@ -21,12 +21,29 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #555; }
         
+        /* 🚀 統一所有輸入框樣式 */
         .form-control, .form-select { 
-            width: 100%; padding: 0 10px; border: 1px solid #ddd; border-radius: 5px; 
-            box-sizing: border-box; font-size: 16px; background-color: #fff; height: 44px; line-height: 42px; 
+            width: 100%; 
+            padding: 10px; /* 改為四周一致的內距 */
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            background-color: #fff; 
+            height: 44px; /* 強制所有框高度一致 */
+            line-height: 1.2; /* 修正文字垂直居中 */
+            -webkit-appearance: none; /* 移除 iOS 預設陰影或圓角 */
+            appearance: none;
         }
-        
-        /* 唯讀欄位樣式 */
+
+        /* 🚀 針對日期欄位的特別強化修正 */
+        input[type="date"].form-control {
+            display: flex;
+            align-items: center;
+            min-height: 44px; /* 確保最小高度 */
+            padding: 8px 10px; /* 微調內部空間 */
+        }
+
         .readonly-field { background-color: #f0f0f0 !important; color: #666; cursor: not-allowed; }
 
         .disease-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -104,7 +121,11 @@
                 </div>
             </div>
 
-            <div class="form-group"><label>生日</label><input type="date" id="p_birthday" class="form-control"></div>
+            <div class="form-group">
+                <label>生日</label>
+                <input type="date" id="p_birthday" class="form-control">
+            </div>
+
             <div class="form-group"><label>晶片號碼</label><input type="text" id="p_ic" class="form-control" placeholder="若無可不填"></div>
             <div class="form-group"><label>備註</label><textarea id="p_memo" class="form-control" style="height:60px;" placeholder="其他想要告知的事項..."></textarea></div>
 
@@ -191,22 +212,16 @@
             document.getElementById('p_type').addEventListener('change', function() { renderBreedsOptions(); });
         };
 
-        // 🚀 核心邏輯：體型自動判定 (與需求定義一致)
         function autoCalcSize() {
             const weightVal = document.getElementById('p_weight').value;
             const displayEl = document.getElementById('p_size_display');
-            
-            if (!weightVal || weightVal <= 0) {
-                displayEl.value = ""; return;
-            }
-
+            if (!weightVal || weightVal <= 0) { displayEl.value = ""; return; }
             const weight = parseFloat(weightVal);
             let text = "";
             if (weight <= 4) text = "迷你犬";
             else if (weight <= 10) text = "小型犬";
             else if (weight <= 25) text = "中型犬";
-            else text = "大型犬"; // 依需求 >25 仍顯示中型犬 (代碼 4)
-
+            else text = "中型犬"; 
             displayEl.value = text;
         }
 
@@ -260,7 +275,6 @@
                         document.getElementById('p_birthday').value = d.basic.p_birthday || '';
                         document.getElementById('p_ic').value = d.basic.p_ic || '';
                         document.getElementById('p_memo').value = d.basic.p_memo || '';
-                        // 載入後觸發體型判定
                         autoCalcSize();
                     }
                     if(d.sick) {
@@ -298,22 +312,17 @@
         function savePet() {
             const name = document.getElementById('p_name').value, breeds = document.getElementById('p_breeds').value;
             if (!name || !breeds) { alert('請填寫必填欄位 (名稱與品種)'); return; }
-            
             const btn = document.getElementById('btn-save'); btn.disabled = true; btn.innerText = '儲存中...';
             const getC = (id) => document.getElementById(id).checked ? 1 : 0, getV = (id) => document.getElementById(id).value.trim();
-            
             const sC = ['ps_ckd','ps_rv','ps_hi','ps_vi','ps_hwd','ps_gi','ps_cdv','ps_piv','ps_dl','ps_ntds','ps_oa','ps_ad','ps_other'];
             const sM = ['ps_dl_memo','ps_ntds_memo','ps_oa_memo','ps_ad_memo','ps_other_memo'];
             const wC = ['pw_asb','pw_wn','pw_mani','pw_sad','pw_dds','pw_pd','pw_bwa','pw_other'];
             const wM = ['pw_bwa_memo','pw_other_memo'];
-            
             const anyS = sC.some(id => getC(id) === 1);
             const anyW = wC.some(id => getC(id) === 1);
-
             let params = `?action=pet_save&u_id=${encodeURIComponent(currentUserId)}&p_id=${document.getElementById('current_p_id').value}&p_name=${encodeURIComponent(name)}&p_type=${document.getElementById('p_type').value}&p_sex=${document.getElementById('p_sex').value}&p_breeds=${encodeURIComponent(breeds)}&p_weight=${getV('p_weight')}&p_birthday=${getV('p_birthday')}&p_ic=${encodeURIComponent(getV('p_ic'))}&p_memo=${encodeURIComponent(getV('p_memo'))}`;
             params += `&ps_none=${(!anyS?1:getC('ps_none'))}`; sC.forEach(id => params += `&${id}=${getC(id)}`); sM.forEach(id => params += `&${id}=${encodeURIComponent(getV(id))}`);
             params += `&pw_none=${(!anyW?1:getC('pw_none'))}`; wC.forEach(id => params += `&${id}=${getC(id)}`); wM.forEach(id => params += `&${id}=${encodeURIComponent(getV(id))}`);
-
             fetch(GAS_URL + params).then(res => res.json()).then(result => { if (result.status === 'success') { alert('儲存成功！'); location.reload(); } }).catch(err => { alert('連線失敗'); btn.disabled = false; btn.innerText = '確認儲存'; });
         }
 
@@ -322,21 +331,15 @@
             document.querySelectorAll('input[type=text], input[type=date], input[type=number], textarea').forEach(el => el.value = ''); 
             document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false); 
             document.getElementById('pet-select').value = ""; 
-            renderBreedsOptions(); 
-            autoCalcSize(); // 重設體型
-            updateModeLabel(true); 
-            window.scrollTo(0,0); 
+            renderBreedsOptions(); autoCalcSize(); updateModeLabel(true); window.scrollTo(0,0); 
         }
-        
         function updateModeLabel(isNew) { 
             const label = document.getElementById('mode-label'), text = document.getElementById('current-mode-text'); 
             label.style.display = 'block'; text.innerText = isNew ? '新增模式' : '維護模式'; 
             text.style.color = isNew ? '#ff9800' : '#06c755'; 
             document.getElementById('btn-save').innerText = isNew ? '確認新增' : '儲存修改'; 
         }
-        
         function onPetSelectChange() { const id = document.getElementById('pet-select').value; if (id) { loadPetDetail(id); updateModeLabel(false); } }
     </script>
 </body>
 </html>
-
