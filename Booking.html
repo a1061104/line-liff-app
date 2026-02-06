@@ -25,6 +25,7 @@
         }
         .btn-small { height: 48px; white-space: nowrap; background-color: #ff9800; color: white; border: none; border-radius: 8px; padding: 0 15px; font-size: 14px; cursor: pointer; font-weight: bold; flex-shrink: 0; }
         .btn { width: 100%; padding: 14px; background-color: #d81b60; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; margin-top: 15px; }
+        .btn:disabled { background-color: #ccc; cursor: not-allowed; }
         #loading-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 999; flex-direction: column; }
         .holiday-badge { margin-top: 8px; padding: 8px 12px; background-color: #fff9c4; border-left: 4px solid #fbc02d; font-size: 13px; color: #7f6e00; border-radius: 4px; }
     </style>
@@ -62,11 +63,17 @@
     </div>
 
     <script>
+        // 設定區：請確保 ID 與 URL 正確
         const MY_LIFF_ID = '2008965576-OEL8Wsmc'; 
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbxzciNP_1cdq9XBnfcgTj5gv_QEt2xk-cevUsocHJx5j4IxjhJvS9DHHz1hhPXzDQHl/exec';
-        let currentUserId = '', g_openTime = "09:00", g_closeTime = "21:00", g_holidays = [];
+        
+        let currentUserId = '';
+        let g_openTime = "09:00";
+        let g_closeTime = "21:00";
+        let g_holidays = [];
 
         window.onload = function() {
+            // --- 日期與時間限制邏輯 (保持原樣) ---
             const dateInput = document.getElementById('r_date');
             const now = new Date();
             const tomorrow = new Date(now);
@@ -90,17 +97,34 @@
                 }
             });
 
-            loadSettings(); loadBeauticians(); loadServices();
+            // --- 載入資料 ---
+            loadSettings(); 
+            loadBeauticians(); 
+            loadServices();
+            
+            // --- LIFF 初始化 ---
             liff.init({ liffId: MY_LIFF_ID }).then(() => {
-                if (!liff.isLoggedIn()) { liff.login(); } 
-                else { liff.getProfile().then(p => { currentUserId = p.userId; loadUserPets(); }); }
+                if (!liff.isLoggedIn()) { 
+                    liff.login(); 
+                } else { 
+                    liff.getProfile().then(p => { 
+                        currentUserId = p.userId; 
+                        loadUserPets(); 
+                    }); 
+                }
+            }).catch(err => {
+                console.error('LIFF Init Failed:', err);
+                document.getElementById('loading-mask').style.display = 'none';
             });
         };
 
+        // --- 讀取系統設定 ---
         function loadSettings() {
             fetch(GAS_URL + `?action=reservation_get_settings`).then(res => res.json()).then(res => {
                 if (res.status === 'success') {
-                    g_openTime = res.data.OPEN_HOUR; g_closeTime = res.data.CLOSE_HOUR; g_holidays = res.data.WEEKLY_HOLIDAY || [];
+                    g_openTime = res.data.OPEN_HOUR; 
+                    g_closeTime = res.data.CLOSE_HOUR; 
+                    g_holidays = res.data.WEEKLY_HOLIDAY || [];
                     document.getElementById('time-hint').innerText = `(請於營業時間 ${g_openTime}~${g_closeTime} 內填寫)`;
                     if (g_holidays.length > 0) {
                         const weekNames = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
@@ -112,10 +136,12 @@
             });
         }
 
+        // --- 讀取使用者寵物 ---
         function loadUserPets() {
             fetch(GAS_URL + `?action=pet_query_list&u_id=${encodeURIComponent(currentUserId)}`).then(res => res.json()).then(res => {
                 document.getElementById('loading-mask').style.display = 'none';
-                const s = document.getElementById('pet_select'); s.innerHTML = '';
+                const s = document.getElementById('pet_select'); 
+                s.innerHTML = '';
                 if (res.status === 'success' && res.data.length > 0) {
                     res.data.forEach(p => s.add(new Option(p.p_name, p.p_id)));
                 } else {
@@ -124,29 +150,115 @@
             });
         }
 
+        // --- 🚀 關鍵更新：送出預約並發送 LINE 訊息 ---
         function submitReservation() {
-            const pet = document.getElementById('pet_select'), date = document.getElementById('r_date').value, time = document.getElementById('r_time').value, srv = document.getElementById('r_service').value;
-            if (!pet.value || !date || !time || !srv) { Swal.fire('請檢查', '請填寫完整預約資訊', 'error'); return; }
+            // 1. 取得欄位
+            const petSelect = document.getElementById('pet_select');
+            const beauticianSelect = document.getElementById('beautician_select');
+            const dateInput = document.getElementById('r_date');
+            const timeInput = document.getElementById('r_time');
+            const srvSelect = document.getElementById('r_service');
+            const btn = document.getElementById('btn-submit');
 
-            const btn = document.getElementById('btn-submit'); btn.disabled = true; btn.innerText = '處理中...';
-            const params = `?action=reservation_save&u_id=${encodeURIComponent(currentUserId)}&p_id=${encodeURIComponent(pet.value)}&b_id=${encodeURIComponent(document.getElementById('beautician_select').value)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&service=${encodeURIComponent(srv)}`;
+            // 2. 取得數值
+            const p_id = petSelect.value;
+            const b_id = beauticianSelect.value;
+            const date = dateInput.value;
+            const time = timeInput.value;
+            const srvCode = srvSelect.value;
 
+            // 3. 取得文字名稱 (用於 LINE 訊息顯示)
+            let p_name = "";
+            let s_name = "";
+            if (petSelect.selectedIndex >= 0) p_name = petSelect.options[petSelect.selectedIndex].text;
+            if (srvSelect.selectedIndex >= 0) s_name = srvSelect.options[srvSelect.selectedIndex].text;
+
+            // 4. 驗證
+            if (!p_id || !date || !time || !srvCode) { 
+                Swal.fire('請檢查', '請填寫完整預約資訊', 'error'); 
+                return; 
+            }
+
+            // 5. 鎖定按鈕
+            btn.disabled = true; 
+            btn.innerText = '處理中...';
+
+            const params = `?action=reservation_save` + 
+                           `&u_id=${encodeURIComponent(currentUserId)}` + 
+                           `&p_id=${encodeURIComponent(p_id)}` + 
+                           `&b_id=${encodeURIComponent(b_id)}` + 
+                           `&date=${encodeURIComponent(date)}` + 
+                           `&time=${encodeURIComponent(time)}` + 
+                           `&service=${encodeURIComponent(srvCode)}`;
+
+            // 6. 呼叫 GAS
             fetch(GAS_URL + params).then(res => res.json()).then(res => {
                 if (res.status === 'success') {
-                    Swal.fire('預約成功', `預約單號：${res.r_id}`, 'success').then(() => {
-                        if (liff.isInClient()) { liff.closeWindow(); }
-                    });
+                    
+                    // --- 成功：發送 LINE 訊息 ---
+                    if (liff.isInClient()) {
+                        liff.sendMessages([
+                            {
+                                "type": "text",
+                                "text": "✅ 預約申請已送出！\n" +
+                                        "------------------\n" +
+                                        "🐶 寵物名稱：" + p_name + "\n" +
+                                        "📅 預約日期：" + date + "\n" +
+                                        "⏰ 預約時間：" + time + "\n" +
+                                        "🛀 服務項目：" + s_name + "\n" +
+                                        "✨ 預約單號：" + res.r_id + "\n\n" +
+                                        "我們將盡快為您確認，謝謝！"
+                            }
+                        ]).then(() => {
+                            // 訊息發送成功
+                            Swal.fire('預約成功', `預約單號：${res.r_id}`, 'success').then(() => {
+                                liff.closeWindow();
+                            });
+                        }).catch((err) => {
+                            // 訊息發送失敗 (可能沒權限)，但預約已成立
+                            console.error('Message send failed', err);
+                            Swal.fire('預約成功', `預約單號：${res.r_id} (通知發送失敗)`, 'success').then(() => {
+                                liff.closeWindow();
+                            });
+                        });
+                    } else {
+                        // 外部瀏覽器
+                        Swal.fire('預約成功', `預約單號：${res.r_id}`, 'success');
+                        btn.disabled = false; 
+                        btn.innerText = '送出預約';
+                    }
+
                 } else {
+                    // 失敗 (後端驗證未通過)
                     Swal.fire('預約失敗', res.message, 'error');
-                    btn.disabled = false; btn.innerText = '送出預約';
+                    btn.disabled = false; 
+                    btn.innerText = '送出預約';
                 }
-            }).catch(() => { Swal.fire('連線錯誤', '請檢查網路連線', 'error'); btn.disabled = false; btn.innerText = '送出預約'; });
+            }).catch(() => { 
+                Swal.fire('連線錯誤', '請檢查網路連線', 'error'); 
+                btn.disabled = false; 
+                btn.innerText = '送出預約'; 
+            });
         }
 
-        // 其餘 loadBeauticians, loadServices 邏輯保持不變...
-        function loadBeauticians() { fetch(GAS_URL + `?action=reservation_beautician_list`).then(res => res.json()).then(res => { const s = document.getElementById('beautician_select'); s.innerHTML = ''; s.add(new Option("不指定", "")); if (res.status === 'success') res.data.forEach(b => s.add(new Option(b.b_name, b.b_id))); }); }
-        function loadServices() { fetch(GAS_URL + `?action=reservation_service_list`).then(res => res.json()).then(res => { const s = document.getElementById('r_service'); s.innerHTML = ''; if (res.status === 'success') res.data.forEach(srv => s.add(new Option(srv.name, srv.code))); }); }
+        // --- 讀取美容師清單 ---
+        function loadBeauticians() { 
+            fetch(GAS_URL + `?action=reservation_beautician_list`).then(res => res.json()).then(res => { 
+                const s = document.getElementById('beautician_select'); 
+                s.innerHTML = ''; 
+                s.add(new Option("不指定", "")); 
+                if (res.status === 'success') res.data.forEach(b => s.add(new Option(b.b_name, b.b_id))); 
+            }); 
+        }
+
+        // --- 讀取服務項目 ---
+        function loadServices() { 
+            fetch(GAS_URL + `?action=reservation_service_list`).then(res => res.json()).then(res => { 
+                const s = document.getElementById('r_service'); 
+                s.innerHTML = ''; 
+                if (res.status === 'success') res.data.forEach(srv => s.add(new Option(srv.name, srv.code))); 
+            }); 
+        }
     </script>
 </body>
 </html>
-
