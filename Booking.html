@@ -1,159 +1,126 @@
-/**
- * 🚀 從 Par_Setting 工作表獲取配置
- */
-function getReservationSettings() {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  var sheet = ss.getSheetByName('Par_Setting');
-  var settings = {};
-  if (!sheet) throw new Error('找不到 Par_Setting 工作表');
-  
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) {
-    var gsName = data[i][0];
-    var parName = data[i][1];
-    var val = data[i][3];
-    
-    if (gsName === 'code_Reservation.gs') {
-      if (parName === 'OPEN_HOUR' || parName === 'CLOSE_HOUR') {
-        settings[parName] = (val instanceof Date) ? Utilities.formatDate(val, Session.getScriptTimeZone(), "HH:mm") : val.toString();
-      } else if (parName === 'DURATION_MIN') {
-        settings[parName] = parseInt(val, 10);
-      }
-    }
-  }
-  return settings;
-}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>美容預約</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: -apple-system, "Helvetica Neue", sans-serif; background-color: #fce4ec; padding: 20px; color: #333; }
+        .container { background: white; max-width: 500px; margin: 0 auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h3 { text-align: center; color: #d81b60; margin-bottom: 25px; font-size: 22px; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; font-size: 14px; }
+        .input-group { display: flex; gap: 10px; align-items: center; }
+        .form-control, .form-select { width: 100%; height: 48px; padding: 0 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; background-color: #fff; color: #333; outline: none; -webkit-appearance: none; appearance: none; display: block; line-height: 48px; }
+        .form-select { background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23d81b60%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 12px top 50%; background-size: 12px auto; padding-right: 30px; }
+        .btn-small { height: 48px; white-space: nowrap; background-color: #ff9800; color: white; border: none; border-radius: 8px; padding: 0 15px; font-size: 14px; cursor: pointer; font-weight: bold; flex-shrink: 0; transition: background-color 0.2s; }
+        .btn { width: 100%; padding: 14px; background-color: #d81b60; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; margin-top: 15px; -webkit-tap-highlight-color: transparent; }
+        .btn:active { background-color: #ad1457; }
+        .btn:disabled { background-color: #f48fb1; cursor: not-allowed; }
+        #loading-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 999; flex-direction: column; }
+    </style>
+</head>
+<body>
+    <div id="loading-mask"><div style="font-weight:bold; font-size:18px; color:#d81b60;">資料讀取中...</div></div>
+    <div class="container">
+        <h3>🛁 預約美容 / 住宿</h3>
+        <div class="form-group">
+            <label>選擇寵物</label>
+            <div class="input-group">
+                <select id="pet_select" class="form-select"><option value="">讀取中...</option></select>
+                <button type="button" class="btn-small" onclick="location.href='Pet.html'">建立毛小孩</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>指定美容師</label>
+            <select id="beautician_select" class="form-select"><option value="">讀取中...</option></select>
+        </div>
+        <div class="form-group">
+            <label>預約日期 <span id="date-hint" style="font-weight:normal; font-size:0.85em; color:#d81b60;">(2026/03/01 正式開幕)</span></label>
+            <input type="date" id="r_date" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>預約時間 <span id="time-hint" style="font-weight:normal; font-size:0.85em; color:#d81b60;">(依營業時間填寫)</span></label>
+            <input type="time" id="r_time" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>服務項目</label>
+            <select id="r_service" class="form-select"><option value="">讀取中...</option></select>
+        </div>
+        <button id="btn-submit" class="btn" onclick="submitReservation()">送出預約</button>
+    </div>
 
-/**
- * 🚀 取得有效美容師清單
- */
-function getActiveBeauticians(ss) {
-  var sheet = ss.getSheetByName('Beautician');
-  if (!sheet) return [];
-  var data = sheet.getDataRange().getValues();
-  var list = [];
-  for (var i = 1; i < data.length; i++) {
-    // 假設 B_Flag 在第 4 欄 (索引 3)
-    if (data[i][3] == 1 && data[i][0]) {
-      list.push({ b_id: data[i][0], b_name: data[i][1] });
-    }
-  }
-  return list;
-}
+    <script>
+        const MY_LIFF_ID = '2008965576-OEL8Wsmc'; 
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzteHr3C5uweBFj6FQCUtQfEEyDQpf7EIkb0vUuoiEmnPLgc37G894IbGNgvI3-5iYISg/exec';
+        let currentUserId = '';
+        let g_openTime = "09:00", g_closeTime = "21:00";
 
-/**
- * 🚀 從 Basic_Data 取得服務選單
- */
-function getServiceOptions(ss) {
-  var sheet = ss.getSheetByName('Basic_Data');
-  if (!sheet) return [];
-  var data = sheet.getDataRange().getValues();
-  var list = [];
-  for (var i = 1; i < data.length; i++) {
-    // A=TB_Name, B=Cul_Name, C=Code, D=Code_Desc, E=Flag
-    if (data[i][0] === 'Reservation' && data[i][1] === 'R_Server' && data[i][4] == 1) {
-      list.push({ code: data[i][2], name: data[i][3] });
-    }
-  }
-  return list;
-}
+        // ✅ 輔助函式：確保日期格式正確且不偏移
+        function formatDateToYYYYMMDD(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
 
-/**
- * 🚀 處理預約邏輯核心
- */
-function handleReservationLogic(params) {
-  try {
-    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    var action = params.action;
-    var now = new Date();
+        window.onload = function() {
+            const dateInput = document.getElementById('r_date');
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            // 🚀 設定開幕日期為 2026/03/01
+            const openingDate = new Date(2026, 2, 1); // 2 = 三月
+            
+            // 取「明天」與「開幕日」較晚的那一天
+            let minDate = (tomorrow > openingDate) ? tomorrow : openingDate;
+            const minStr = formatDateToYYYYMMDD(minDate);
 
-    if (action === 'reservation_get_settings') {
-      return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: getReservationSettings() })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    if (action === 'reservation_beautician_list') {
-      return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: getActiveBeauticians(ss) })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    if (action === 'reservation_service_list') {
-      return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: getServiceOptions(ss) })).setMimeType(ContentService.MimeType.JSON);
-    }
+            dateInput.min = minStr;
+            dateInput.value = minStr;
 
-    if (action === 'reservation_save') {
-      var config = getReservationSettings();
-      // ✅ 依照圖片更新為 14 欄位
-      var sheet = getOrCreateSheet(ss, 'Reservation', [
-        'R_ID', 'R_Date', 'R_StartTime', 'R_EndTime', 'U_ID', 'P_ID', 'R_Server', 'B_ID', 
-        'R_Flag', 'R_Confirm', 'R_CheckIn', 'R_SyncCal', 'CreateDate', 'Update_Time'
-      ]);
+            dateInput.addEventListener('change', function() {
+                if (this.value < minStr) {
+                    alert(now < openingDate ? '本店將於 2026/03/01 正式開幕，請重新選擇日期。' : '預約日期最早僅限從明天開始。');
+                    this.value = minStr;
+                }
+            });
 
-      var dateParts = params.date.split('-');
-      var selectedDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-      
-      // 🚀 1. 開幕日檢查 (2026/03/01)
-      var openingDate = new Date(2026, 2, 1);
-      if (selectedDate < openingDate) {
-        return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: '預約失敗：本店將於 2026/03/01 正式開幕。' })).setMimeType(ContentService.MimeType.JSON);
-      }
+            loadSettings(); loadBeauticians(); loadServices();
+            liff.init({ liffId: MY_LIFF_ID }).then(() => {
+                if (!liff.isLoggedIn()) liff.login();
+                else liff.getProfile().then(p => { currentUserId = p.userId; loadUserPets(); });
+            }).catch(e => console.error(e));
+        };
 
-      // 🚀 2. 明日以後檢查
-      var today = new Date(); 
-      today.setHours(0, 0, 0, 0);
-      if (selectedDate.getTime() <= today.getTime()) {
-        return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: '預約失敗：僅開放預約明日以後的時段。' })).setMimeType(ContentService.MimeType.JSON);
-      }
+        function loadSettings() { fetch(GAS_URL + `?action=reservation_get_settings`).then(r => r.json()).then(res => { if (res.status === 'success') { g_openTime = res.data.OPEN_HOUR; g_closeTime = res.data.CLOSE_HOUR; document.getElementById('time-hint').innerText = `(營業時間 ${g_openTime}~${g_closeTime})`; } }); }
+        function loadBeauticians() { fetch(GAS_URL + `?action=reservation_beautician_list`).then(r => r.json()).then(res => { const s = document.getElementById('beautician_select'); s.innerHTML = ''; s.add(new Option("不指定 (Any)", "")); if (res.status === 'success') res.data.forEach(b => s.add(new Option(b.b_name, b.b_id))); }); }
+        function loadServices() { fetch(GAS_URL + `?action=reservation_service_list`).then(r => r.json()).then(res => { const s = document.getElementById('r_service'); s.innerHTML = ''; if (res.status === 'success') res.data.forEach(srv => s.add(new Option(srv.name, srv.code))); }); }
+        function loadUserPets() { fetch(GAS_URL + `?action=pet_query_list&u_id=${encodeURIComponent(currentUserId)}`).then(r => r.json()).then(res => { document.getElementById('loading-mask').style.display = 'none'; const s = document.getElementById('pet_select'); s.innerHTML = ''; if (res.status === 'success' && res.data.length > 0) res.data.forEach(p => s.add(new Option(p.p_name, p.p_id))); else { alert('請先建立寵物檔案'); window.location.href = 'index.html'; } }); }
 
-      // 🚀 3. 營業時間檢查
-      var userM = timeToMinutes(params.time);
-      var openM = timeToMinutes(config.OPEN_HOUR);
-      var closeM = timeToMinutes(config.CLOSE_HOUR);
-      if (userM < openM || userM > closeM) {
-        return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: '不在營業時間內。' })).setMimeType(ContentService.MimeType.JSON);
-      }
+        function submitReservation() {
+            const petS = document.getElementById('pet_select'), bS = document.getElementById('beautician_select'),
+                  date = document.getElementById('r_date').value, time = document.getElementById('r_time').value,
+                  srvS = document.getElementById('r_service'), btn = document.getElementById('btn-submit');
+            
+            if (!date || !time) return alert('請填寫日期與時間');
+            const [h, m] = time.split(':').map(Number), userM = h * 60 + m;
+            const [oH, oM] = g_openTime.split(':').map(Number), openM = oH * 60 + oM;
+            const [cH, cM] = g_closeTime.split(':').map(Number), closeM = cH * 60 + cM;
+            if (userM < openM || userM > closeM) return alert(`預約失敗：營業時間為 ${g_openTime} 至 ${g_closeTime}`);
 
-      var r_id = generateTimestampId(now);
-      var endTime = calculateEndTime(params.time, config.DURATION_MIN);
-      
-      // ✅ 依照圖片順序排列資料 (14 欄位)
-      var rowData = [
-        r_id,              // R_ID
-        params.date,       // R_Date
-        params.time,       // R_StartTime
-        endTime,           // R_EndTime
-        params.u_id,       // U_ID
-        params.p_id,       // P_ID
-        params.service,    // R_Server
-        params.b_id || '', // B_ID
-        '1',               // R_Flag
-        '0',               // R_Confirm (新增)
-        '0',               // R_CheckIn (修改名)
-        '0',               // R_SyncCal
-        now,               // CreateDate
-        ''                 // Update_Time
-      ];
-      
-      sheet.appendRow(rowData);
-      return ContentService.createTextOutput(JSON.stringify({ status: 'success', r_id: r_id })).setMimeType(ContentService.MimeType.JSON);
-    }
-  } catch (e) {
-    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: '系統錯誤: ' + e.message })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-// --- 工具函式 ---
-function timeToMinutes(t) { 
-  var p = t.split(':'); 
-  return parseInt(p[0], 10) * 60 + parseInt(p[1], 10); 
-}
-
-function generateTimestampId(d) { 
-  var pad = function(n, l) { return n.toString().padStart(l, '0'); };
-  return 'R' + d.getFullYear().toString().slice(-2) + pad(d.getMonth() + 1, 2) + pad(d.getDate(), 2) + pad(d.getHours(), 2) + pad(d.getMinutes(), 2) + pad(d.getSeconds(), 2) + Math.floor(d.getMilliseconds() / 100).toString(); 
-}
-
-function calculateEndTime(s, dur) { 
-  var p = s.split(':'), d = new Date(); 
-  d.setHours(p[0], p[1], 0); 
-  d.setMinutes(d.getMinutes() + dur); 
-  return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'); 
-}
+            btn.disabled = true; btn.innerText = '處理中...';
+            const params = `?action=reservation_save&u_id=${encodeURIComponent(currentUserId)}&p_id=${encodeURIComponent(petS.value)}&b_id=${encodeURIComponent(bS.value)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&service=${encodeURIComponent(srvS.value)}`;
+            fetch(GAS_URL + params).then(r => r.json()).then(res => {
+                if (res.status === 'success') {
+                    const msg = `✅ 預約申請已送出！\n🐶 寵物：${petS.options[petS.selectedIndex].text}\n📅 日期：${date}\n⏰ 時間：${time}\n✨ 單號：${res.r_id}`;
+                    if (liff.isInClient()) liff.sendMessages([{type: 'text', text: msg}]).then(() => liff.closeWindow());
+                    else alert(msg);
+                } else { alert(res.message); btn.disabled = false; btn.innerText = '送出預約'; }
+            }).catch(() => { alert('連線錯誤'); btn.disabled = false; });
+        }
+    </script>
+</body>
+</html>
