@@ -92,11 +92,12 @@
 
         let g_openTime = "09:00"; 
         let g_closeTime = "21:00";
+        let g_holidays = []; // ✅ 新增：儲存店休日陣列 [cite: 5]
 
         window.onload = function() {
             const dateInput = document.getElementById('r_date');
             
-            // ✅ 新增：計算明日日期 (YYYY-MM-DD)
+            // 計算明日日期 (YYYY-MM-DD)
             const now = new Date();
             const tomorrow = new Date(now);
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -106,15 +107,27 @@
             const day = String(tomorrow.getDate()).padStart(2, '0');
             const minDateString = `${year}-${month}-${day}`;
 
-            // ✅ 新增：設置前端日期限制 
+            // 設置前端日期限制 
             dateInput.min = minDateString;
             dateInput.value = minDateString; // 預設為明天
 
-            // ✅ 新增：監聽日期變動，防止繞過限制 
+            // ✅ 強化日期監聽：包含日期範圍與店休日檢查 
             dateInput.addEventListener('change', function() {
+                // 1. 檢查是否早於明天
                 if (this.value < minDateString) {
                     alert('⚠️ 預約日期最早僅限從「明天」開始。');
                     this.value = minDateString; 
+                    return;
+                }
+
+                // 2. 檢查是否為店休日 
+                const selectedDate = new Date(this.value);
+                const dayOfWeek = selectedDate.getDay(); // 0(日) ~ 6(六)
+                
+                if (g_holidays.includes(dayOfWeek)) {
+                    const weekNames = ["日", "一", "二", "三", "四", "五", "六"];
+                    alert(`📅 抱歉，每週（週${weekNames[dayOfWeek]}）為本店固定店休日，請選擇其他日期。`);
+                    this.value = minDateString; // 重設回預設日期
                 }
             });
 
@@ -136,6 +149,7 @@
                     const config = result.data;
                     g_openTime = config.OPEN_HOUR;   
                     g_closeTime = config.CLOSE_HOUR; 
+                    g_holidays = config.WEEKLY_HOLIDAY || []; // ✅ 新增：接收店休日設定 
                     document.getElementById('time-hint').innerText = `(請依營業時間填寫 ${g_openTime}~${g_closeTime})`;
                 }
             })
@@ -262,6 +276,7 @@
                         .catch(() => { alert('預約成功，單號：' + result.r_id); liff.closeWindow(); });
                     } else { alert('預約成功！單號：' + result.r_id); }
                 } else {
+                    // ✅ 這裡會顯示後台傳回來的店休日或營業時間錯誤訊息 
                     alert(result.message);
                     btn.disabled = false;
                     btn.innerText = '送出預約';
