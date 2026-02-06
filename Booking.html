@@ -14,7 +14,6 @@
         .form-group { margin-bottom: 20px; text-align: left; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; font-size: 14px; }
         
-        /* 🚀 組合輸入框佈局 (用於選單+按鈕) */
         .input-group { display: flex; gap: 10px; align-items: center; }
 
         .form-control, .form-select { 
@@ -29,7 +28,6 @@
             background-repeat: no-repeat; background-position: right 12px top 50%; background-size: 12px auto; padding-right: 30px;
         }
         
-        /* 🚀 小按鈕樣式 */
         .btn-small { 
             height: 48px; white-space: nowrap; background-color: #ff9800; color: white; border: none; 
             border-radius: 8px; padding: 0 15px; font-size: 14px; cursor: pointer; font-weight: bold; 
@@ -97,6 +95,8 @@
 
         window.onload = function() {
             const dateInput = document.getElementById('r_date');
+            
+            // ✅ 新增：計算明日日期 (YYYY-MM-DD)
             const now = new Date();
             const tomorrow = new Date(now);
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -104,12 +104,23 @@
             const year = tomorrow.getFullYear();
             const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
             const day = String(tomorrow.getDate()).padStart(2, '0');
-            dateInput.min = `${year}-${month}-${day}`;
-            dateInput.value = dateInput.min;
+            const minDateString = `${year}-${month}-${day}`;
+
+            // ✅ 新增：設置前端日期限制 
+            dateInput.min = minDateString;
+            dateInput.value = minDateString; // 預設為明天
+
+            // ✅ 新增：監聽日期變動，防止繞過限制 
+            dateInput.addEventListener('change', function() {
+                if (this.value < minDateString) {
+                    alert('⚠️ 預約日期最早僅限從「明天」開始。');
+                    this.value = minDateString; 
+                }
+            });
 
             loadSettings();     
             loadBeauticians();
-            loadServices(); // 🚀 新增：載入動態服務選單
+            loadServices(); 
 
             liff.init({ liffId: MY_LIFF_ID }).then(() => {
                 if (!liff.isLoggedIn()) { liff.login(); } 
@@ -150,17 +161,15 @@
             });
         }
 
-        // 🚀 新增：讀取 Basic_Data 服務清單
         function loadServices() {
             fetch(GAS_URL + `?action=reservation_service_list`)
             .then(res => res.json())
             .then(result => {
                 const select = document.getElementById('r_service');
-                select.innerHTML = ''; // 清空預設的 "讀取中..."
+                select.innerHTML = ''; 
                 
                 if (result.status === 'success' && result.data.length > 0) {
                     result.data.forEach(srv => {
-                        // 顯示：Code_Desc (srv.name), 值：Code (srv.code)
                         select.add(new Option(srv.name, srv.code));
                     });
                 } else {
@@ -208,9 +217,8 @@
             const date = document.getElementById('r_date').value;
             const time = document.getElementById('r_time').value;
             
-            // 🚀 服務項目現在是動態的，取得 Code
             const sSelect = document.getElementById('r_service');
-            const serviceCode = sSelect.value; // 這會是 Basic_Data 的 Code (例如 "1")
+            const serviceCode = sSelect.value; 
             
             if (!p_id || p_id === "") { alert('請先建立並選擇寵物'); return; }
             if (!date) { alert('請選擇日期'); return; }
@@ -235,7 +243,6 @@
             btn.disabled = true;
             btn.innerText = '處理中...';
 
-            // 將 serviceCode 傳給後端
             const params = `?action=reservation_save` +
                            `&u_id=${encodeURIComponent(currentUserId)}` +
                            `&p_id=${encodeURIComponent(p_id)}` +
