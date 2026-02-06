@@ -40,6 +40,17 @@
         .btn:disabled { background-color: #f48fb1; cursor: not-allowed; }
         
         #loading-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 999; flex-direction: column; }
+        
+        /* ✅ 店休日提示樣式 */
+        .holiday-badge {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background-color: #fff9c4;
+            border-left: 4px solid #fbc02d;
+            font-size: 13px;
+            color: #7f6e00;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -68,6 +79,7 @@
         <div class="form-group">
             <label>預約日期 (僅開放明天以後)</label>
             <input type="date" id="r_date" class="form-control">
+            <div id="holiday-info" class="holiday-badge" style="display:none;"></div>
         </div>
 
         <div class="form-group">
@@ -92,12 +104,10 @@
 
         let g_openTime = "09:00"; 
         let g_closeTime = "21:00";
-        let g_holidays = []; // ✅ 新增：儲存店休日陣列 [cite: 5]
+        let g_holidays = []; 
 
         window.onload = function() {
             const dateInput = document.getElementById('r_date');
-            
-            // 計算明日日期 (YYYY-MM-DD)
             const now = new Date();
             const tomorrow = new Date(now);
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -107,27 +117,23 @@
             const day = String(tomorrow.getDate()).padStart(2, '0');
             const minDateString = `${year}-${month}-${day}`;
 
-            // 設置前端日期限制 
             dateInput.min = minDateString;
-            dateInput.value = minDateString; // 預設為明天
+            dateInput.value = minDateString; 
 
-            // ✅ 強化日期監聽：包含日期範圍與店休日檢查 
             dateInput.addEventListener('change', function() {
-                // 1. 檢查是否早於明天
                 if (this.value < minDateString) {
                     alert('⚠️ 預約日期最早僅限從「明天」開始。');
                     this.value = minDateString; 
                     return;
                 }
 
-                // 2. 檢查是否為店休日 
                 const selectedDate = new Date(this.value);
-                const dayOfWeek = selectedDate.getDay(); // 0(日) ~ 6(六)
+                const dayOfWeek = selectedDate.getDay(); 
                 
                 if (g_holidays.includes(dayOfWeek)) {
                     const weekNames = ["日", "一", "二", "三", "四", "五", "六"];
                     alert(`📅 抱歉，每週（週${weekNames[dayOfWeek]}）為本店固定店休日，請選擇其他日期。`);
-                    this.value = minDateString; // 重設回預設日期
+                    this.value = minDateString; 
                 }
             });
 
@@ -149,8 +155,17 @@
                     const config = result.data;
                     g_openTime = config.OPEN_HOUR;   
                     g_closeTime = config.CLOSE_HOUR; 
-                    g_holidays = config.WEEKLY_HOLIDAY || []; // ✅ 新增：接收店休日設定 
+                    g_holidays = config.WEEKLY_HOLIDAY || []; 
                     document.getElementById('time-hint').innerText = `(請依營業時間填寫 ${g_openTime}~${g_closeTime})`;
+
+                    // ✅ 自動生成店休日文字並顯示
+                    if (g_holidays.length > 0) {
+                        const weekNames = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
+                        const holidayNames = g_holidays.map(h => weekNames[h]).join('、');
+                        const infoBox = document.getElementById('holiday-info');
+                        infoBox.innerText = `💡 提醒您：本店每週（${holidayNames}）店休，不提供預約服務。`;
+                        infoBox.style.display = 'block';
+                    }
                 }
             })
             .catch(err => console.error("讀取設定失敗", err));
@@ -163,15 +178,9 @@
                 const select = document.getElementById('beautician_select');
                 select.innerHTML = ''; 
                 select.add(new Option("不指定 (Any)", ""));
-
                 if (result.status === 'success' && result.data.length > 0) {
-                    result.data.forEach(b => {
-                        select.add(new Option(b.b_name, b.b_id));
-                    });
+                    result.data.forEach(b => { select.add(new Option(b.b_name, b.b_id)); });
                 }
-            })
-            .catch(err => {
-                document.getElementById('beautician_select').innerHTML = '<option value="">載入失敗</option>';
             });
         }
 
@@ -181,18 +190,9 @@
             .then(result => {
                 const select = document.getElementById('r_service');
                 select.innerHTML = ''; 
-                
                 if (result.status === 'success' && result.data.length > 0) {
-                    result.data.forEach(srv => {
-                        select.add(new Option(srv.name, srv.code));
-                    });
-                } else {
-                    select.add(new Option("無法載入服務項目", ""));
+                    result.data.forEach(srv => { select.add(new Option(srv.name, srv.code)); });
                 }
-            })
-            .catch(err => {
-                console.error('Load Services Error', err);
-                document.getElementById('r_service').innerHTML = '<option value="">載入失敗</option>';
             });
         }
 
@@ -203,19 +203,12 @@
                 document.getElementById('loading-mask').style.display = 'none';
                 const select = document.getElementById('pet_select');
                 select.innerHTML = '';
-                
                 if (result.status === 'success' && result.data.length > 0) {
-                    result.data.forEach(pet => {
-                        select.add(new Option(pet.p_name, pet.p_id));
-                    });
+                    result.data.forEach(pet => { select.add(new Option(pet.p_name, pet.p_id)); });
                 } else {
                     alert('⚠️ 系統偵測到您尚未建立毛小孩檔案，請先完成建檔再進行預約。');
                     window.location.href = 'index.html';
                 }
-            })
-            .catch(err => {
-                document.getElementById('loading-mask').style.display = 'none';
-                alert('讀取資料失敗，請重新整理');
             });
         }
 
@@ -223,32 +216,22 @@
             const petSelect = document.getElementById('pet_select');
             const p_id = petSelect.value;
             const p_name = petSelect.options[petSelect.selectedIndex].text;
-            
             const bSelect = document.getElementById('beautician_select');
             const b_id = bSelect.value;
             const b_name = bSelect.options[bSelect.selectedIndex].text;
-
             const date = document.getElementById('r_date').value;
             const time = document.getElementById('r_time').value;
-            
             const sSelect = document.getElementById('r_service');
             const serviceCode = sSelect.value; 
             
-            if (!p_id || p_id === "") { alert('請先建立並選擇寵物'); return; }
-            if (!date) { alert('請選擇日期'); return; }
-            if (!time) { alert('請選擇時間'); return; }
-            if (!serviceCode) { alert('請選擇服務項目'); return; }
+            if (!p_id || !date || !time || !serviceCode) { alert('請填寫完整預約資訊'); return; }
 
             const [h, m] = time.split(':').map(Number);
             const userTotalMins = h * 60 + m;
-
             const [openH, openM] = g_openTime.split(':').map(Number);
-            const openTotalMins = openH * 60 + openM;
-
             const [closeH, closeM] = g_closeTime.split(':').map(Number);
-            const closeTotalMins = closeH * 60 + closeM;
 
-            if (userTotalMins < openTotalMins || userTotalMins > closeTotalMins) {
+            if (userTotalMins < (openH * 60 + openM) || userTotalMins > (closeH * 60 + closeM)) {
                 alert(`預約失敗：營業時間為 ${g_openTime} 至 ${g_closeTime}`);
                 return;
             }
@@ -257,13 +240,7 @@
             btn.disabled = true;
             btn.innerText = '處理中...';
 
-            const params = `?action=reservation_save` +
-                           `&u_id=${encodeURIComponent(currentUserId)}` +
-                           `&p_id=${encodeURIComponent(p_id)}` +
-                           `&b_id=${encodeURIComponent(b_id)}` +
-                           `&date=${encodeURIComponent(date)}` +
-                           `&time=${encodeURIComponent(time)}` +
-                           `&service=${encodeURIComponent(serviceCode)}`;
+            const params = `?action=reservation_save&u_id=${encodeURIComponent(currentUserId)}&p_id=${encodeURIComponent(p_id)}&b_id=${encodeURIComponent(b_id)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&service=${encodeURIComponent(serviceCode)}`;
 
             fetch(GAS_URL + params)
             .then(res => res.json())
@@ -271,21 +248,13 @@
                 if (result.status === 'success') {
                     if (liff.isInClient()) {
                         let msg = "✅ 預約申請已送出！\n------------------\n🐶 寵物名稱：" + p_name + "\n📅 預約日期：" + date + "\n⏰ 預約時間：" + time + "\n💇 指定美容師：" + b_name + "\n✨ 預約單號：" + result.r_id;
-                        liff.sendMessages([{ "type": "text", "text": msg }])
-                        .then(() => { liff.closeWindow(); })
-                        .catch(() => { alert('預約成功，單號：' + result.r_id); liff.closeWindow(); });
+                        liff.sendMessages([{ "type": "text", "text": msg }]).then(() => liff.closeWindow());
                     } else { alert('預約成功！單號：' + result.r_id); }
                 } else {
-                    // ✅ 這裡會顯示後台傳回來的店休日或營業時間錯誤訊息 
                     alert(result.message);
                     btn.disabled = false;
                     btn.innerText = '送出預約';
                 }
-            })
-            .catch(err => {
-                alert('連線錯誤，請檢查網路');
-                btn.disabled = false;
-                btn.innerText = '送出預約';
             });
         }
     </script>
