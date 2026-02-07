@@ -147,7 +147,7 @@
                         const hNames = g_holidays.map(h => weekNames[h]).join('、');
                         let infoText = "";
                         if (g_holidays.length > 0) infoText += `💡 本店每週（${hNames}）固定店休。`;
-                        if (g_specificHolidays.length > 0) infoText += ` 另有 ${g_specificHolidays.length} 天特定公休。`;
+                        //if (g_specificHolidays.length > 0) infoText += ` 另有 ${g_specificHolidays.length} 天特定公休。`;
                         
                         document.getElementById('holiday-info').style.display = 'block';
                         document.getElementById('holiday-info').innerText = infoText;
@@ -304,3 +304,4 @@
     </script>
 </body>
 </html>
+
