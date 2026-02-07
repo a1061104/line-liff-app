@@ -9,7 +9,7 @@
 
     <style>
         :root {
-            --primary-color: #2e86de; /* 使用藍色作為主色調 */
+            --primary-color: #2e86de;
             --bg-color: #f0f2f5;
             --card-bg: #ffffff;
             --text-main: #333333;
@@ -20,123 +20,61 @@
         body {
             font-family: 'Noto Sans TC', sans-serif;
             background-color: var(--bg-color);
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        h2 { margin: 10px 0 20px; text-align: center; color: var(--text-main); }
+        h2 { margin: 10px 0 20px; color: var(--text-main); }
 
-        /* 列表容器 */
         .list-container {
-            width: 100%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            width: 100%; max-width: 400px;
+            display: flex; flex-direction: column; gap: 15px;
         }
 
-        /* 預約卡片樣式 */
         .booking-card {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: var(--radius);
+            background: var(--card-bg); padding: 20px; border-radius: var(--radius);
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            position: relative;
-            overflow: hidden;
+            position: relative; overflow: hidden;
+            display: flex; flex-direction: column; gap: 10px;
         }
 
-        /* 左側裝飾線條 */
         .booking-card::before {
-            content: '';
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            width: 5px;
-            background-color: var(--primary-color);
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+            width: 5px; background-color: var(--primary-color);
         }
 
         .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-            margin-bottom: 5px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #eee; padding-bottom: 10px;
         }
 
-        .date-badge {
-            font-weight: 700;
-            font-size: 18px;
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
+        .date-badge { font-weight: 700; font-size: 18px; color: var(--primary-color); }
 
-        .status-badge {
-            font-size: 12px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            background: #eee;
-            color: #666;
-        }
-        
-        /* 狀態顏色變體 */
-        .status-confirmed { background: #e3f9ea; color: #06c755; } /* 已確認 */
-        .status-pending { background: #fff4e6; color: #ff9f43; } /* 待確認 */
-        .status-cancelled { background: #ffebeb; color: #ff4757; } /* 已取消 */
-
-        .card-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            color: var(--text-main);
-        }
-
+        .card-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-main); }
         .label { color: var(--text-sub); }
         .val { font-weight: 500; }
 
-        /* 載入中與無資料 */
-        #loading, #no-data {
-            text-align: center;
-            color: var(--text-sub);
-            margin-top: 50px;
-            display: none;
-        }
+        #loading, #no-data { text-align: center; color: var(--text-sub); margin-top: 50px; display: none; }
         
         .back-btn {
-            margin-top: 20px;
-            color: var(--text-sub);
-            text-decoration: none;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            margin-top: 20px; color: var(--text-sub); text-decoration: none; font-size: 14px;
         }
     </style>
 </head>
 <body>
 
-    <h2>📅 預約紀錄</h2>
+    <h2>📅 我的預約紀錄</h2>
 
     <div id="loading">載入資料中...</div>
-    <div id="no-data">目前沒有預約紀錄</div>
+    <div id="no-data">目前沒有符合條件的預約紀錄</div>
 
-    <div class="list-container" id="list-area">
-        </div>
+    <div class="list-container" id="list-area"></div>
 
     <a href="index.html" class="back-btn">‹ 返回會員中心</a>
 
     <script>
         const MY_LIFF_ID = '2008965576-txfwY86y'; 
-        // 使用您原本的 GAS URL
+        // 請確保此處為您 GAS 部署後的網址
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbxzciNP_1cdq9XBnfcgTj5gv_QEt2xk-cevUsocHJx5j4IxjhJvS9DHHz1hhPXzDQHl/exec';
 
         window.onload = function() {
@@ -161,7 +99,6 @@
         }
 
         function fetchBookingHistory(userId) {
-            // 呼叫 GAS API: action=get_booking_history
             const url = `${GAS_URL}?action=get_booking_history&u_id=${encodeURIComponent(userId)}`;
 
             fetch(url)
@@ -175,8 +112,7 @@
                     }
                 })
                 .catch(err => {
-                    document.getElementById('loading').innerText = '資料讀取失敗，請稍後再試';
-                    console.error(err);
+                    document.getElementById('loading').innerText = '資料讀取失敗';
                 });
         }
 
@@ -185,28 +121,22 @@
             container.innerHTML = '';
 
             bookings.forEach(item => {
-                // 判斷狀態樣式
-                let statusClass = '';
-                if (item.status === '已確認') statusClass = 'status-confirmed';
-                else if (item.status === '取消') statusClass = 'status-cancelled';
-                else statusClass = 'status-pending'; // 預設
-
                 const html = `
                     <div class="booking-card">
                         <div class="card-header">
                             <div class="date-badge">
-                                <span>${item.date}</span>
-                                <span style="font-size:14px; font-weight:normal; margin-left:5px;">${item.time}</span>
+                                <span>${item.rDate}</span>
+                                <span style="font-size:14px; font-weight:normal; margin-left:5px;">${item.startTime}</span>
                             </div>
-                            <div class="status-badge ${statusClass}">${item.status}</div>
+                            <div style="font-size: 12px; color: #06c755;">預約有效</div>
                         </div>
                         <div class="card-row">
-                            <span class="label">毛小孩</span>
-                            <span class="val">${item.petName}</span>
+                            <span class="label">預約編號 (R_ID)</span>
+                            <span class="val">${item.rId}</span>
                         </div>
                         <div class="card-row">
-                            <span class="label">服務項目</span>
-                            <span class="val">${item.service}</span>
+                            <span class="label">寵物 ID (P_ID)</span>
+                            <span class="val">${item.pId}</span>
                         </div>
                     </div>
                 `;
