@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>美容預約</title>
+    
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -16,22 +18,26 @@
         .form-group { margin-bottom: 20px; text-align: left; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; font-size: 14px; }
         .input-group { display: flex; gap: 10px; align-items: center; }
+        
         .form-control, .form-select { 
             width: 100%; height: 48px; padding: 0 12px; border: 1px solid #ddd; 
             border-radius: 8px; box-sizing: border-box; font-size: 16px; 
             background-color: #fff; color: #333; outline: none; 
             -webkit-appearance: none; appearance: none; display: block; line-height: 48px; 
         }
-        /* 讓 input readonly 防止手機跳出鍵盤，只跳出日曆 */
+
+        /* 讓日期欄位看起來像按鈕，且在手機上不會跳出鍵盤 */
         #r_date { background-color: #fff; cursor: pointer; } 
-        
+
         .form-select {
             background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23d81b60%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat; background-position: right 12px top 50%; background-size: 12px auto; padding-right: 30px;
         }
+        
         .btn-small { height: 48px; white-space: nowrap; background-color: #ff9800; color: white; border: none; border-radius: 8px; padding: 0 15px; font-size: 14px; cursor: pointer; font-weight: bold; flex-shrink: 0; }
         .btn { width: 100%; padding: 14px; background-color: #d81b60; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; margin-top: 15px; }
         .btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        
         #loading-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 999; flex-direction: column; }
         .holiday-badge { margin-top: 8px; padding: 8px 12px; background-color: #fff9c4; border-left: 4px solid #fbc02d; font-size: 13px; color: #7f6e00; border-radius: 4px; }
     </style>
@@ -41,6 +47,7 @@
 
     <div class="container">
         <h3>🛁 預約美容 / 住宿</h3>
+        
         <div class="form-group">
             <label>選擇寵物</label>
             <div class="input-group">
@@ -48,61 +55,82 @@
                 <button type="button" class="btn-small" onclick="location.href='Pet.html'">建立毛小孩</button>
             </div>
         </div>
+        
         <div class="form-group">
             <label>指定美容師</label>
             <select id="beautician_select" class="form-select"><option value="">讀取中...</option></select>
         </div>
+        
         <div class="form-group">
             <label>預約日期 (僅開放明天以後)</label>
             <input type="text" id="r_date" class="form-control" placeholder="請點選日期" readonly>
             <div id="holiday-info" class="holiday-badge" style="display:none;"></div>
         </div>
+        
         <div class="form-group">
             <label>預約時間 <span id="time-hint" style="font-weight:normal; font-size:0.95em; color:#d81b60;"></span></label>
             <input type="time" id="r_time" class="form-control">
         </div>
+        
         <div class="form-group">
             <label>服務項目</label>
             <select id="r_service" class="form-select"><option value="">讀取中...</option></select>
         </div>
+        
         <button id="btn-submit" class="btn" onclick="submitReservation()">送出預約</button>
     </div>
 
     <script>
+        // ==========================================
+        // 1. 設定區 (請確認 ID 與 URL 正確)
+        // ==========================================
         const MY_LIFF_ID = '2008965576-OEL8Wsmc'; 
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbxzciNP_1cdq9XBnfcgTj5gv_QEt2xk-cevUsocHJx5j4IxjhJvS9DHHz1hhPXzDQHl/exec';
         
         let currentUserId = '';
         let g_openTime = "09:00";
         let g_closeTime = "21:00";
-        let g_holidays = [];
-        let g_flatpickrInstance = null; // 儲存日曆實體
+        let g_holidays = []; // 儲存店休日 (0=週日, 1=週一...)
 
+        // ==========================================
+        // 2. 初始化流程
+        // ==========================================
         window.onload = function() {
-            // 移除舊的 Date Input 監聽，改由 loadSettings 後初始化日曆
-            
+            // 先讀取後端設定 (營業時間、店休日)，讀完再初始化日曆
             loadSettings(); 
             loadBeauticians(); 
             loadServices();
             
+            // LIFF 初始化
             liff.init({ liffId: MY_LIFF_ID }).then(() => {
-                if (!liff.isLoggedIn()) { liff.login(); } 
-                else { liff.getProfile().then(p => { currentUserId = p.userId; loadUserPets(); }); }
+                if (!liff.isLoggedIn()) { 
+                    liff.login(); 
+                } else { 
+                    liff.getProfile().then(p => { 
+                        currentUserId = p.userId; 
+                        loadUserPets(); 
+                    }); 
+                }
             }).catch(err => {
                 console.error('LIFF Init Failed:', err);
+                // 即使 LIFF 失敗也關閉遮罩，讓網頁能顯示 (方便除錯)
                 document.getElementById('loading-mask').style.display = 'none';
             });
         };
 
+        // ==========================================
+        // 3. 資料讀取函式
+        // ==========================================
         function loadSettings() {
             fetch(GAS_URL + `?action=reservation_get_settings`).then(res => res.json()).then(res => {
                 if (res.status === 'success') {
                     g_openTime = res.data.OPEN_HOUR; 
                     g_closeTime = res.data.CLOSE_HOUR; 
                     g_holidays = res.data.WEEKLY_HOLIDAY || [];
+                    
                     document.getElementById('time-hint').innerText = `(請於營業時間 ${g_openTime}~${g_closeTime} 內填寫)`;
                     
-                    // 顯示店休日文字
+                    // 顯示店休日提示
                     if (g_holidays.length > 0) {
                         const weekNames = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
                         const hNames = g_holidays.map(h => weekNames[h]).join('、');
@@ -110,32 +138,8 @@
                         document.getElementById('holiday-info').innerText = `💡 本店每週（${hNames}）固定店休。`;
                     }
 
-                    // --- 3. 初始化 Flatpickr 日曆 (重點修改) ---
+                    // ✅ 設定讀取完畢後，初始化 Flatpickr 日曆
                     initFlatpickr();
-                }
-            });
-        }
-
-        // 🚀 新增：初始化日曆函式
-        function initFlatpickr() {
-            // 計算明天
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-
-            g_flatpickrInstance = flatpickr("#r_date", {
-                locale: "zh_tw",      // 設定中文
-                minDate: tomorrow,    // 只能選明天以後 (過去日期直接變灰)
-                dateFormat: "Y-m-d",  // 資料格式
-                disable: [
-                    function(date) {
-                        // 回傳 true 代表該日期要被鎖住
-                        // date.getDay() 回傳 0(週日) ~ 6(週六)
-                        // 如果該週幾存在於 g_holidays 陣列中，就鎖住
-                        return g_holidays.includes(date.getDay());
-                    }
-                ],
-                onChange: function(selectedDates, dateStr, instance) {
-                   // 日期改變時的額外處理 (目前不需要，因為不能選的都已經鎖住了)
                 }
             });
         }
@@ -153,8 +157,56 @@
             });
         }
 
+        function loadBeauticians() { 
+            fetch(GAS_URL + `?action=reservation_beautician_list`).then(res => res.json()).then(res => { 
+                const s = document.getElementById('beautician_select'); 
+                s.innerHTML = ''; 
+                s.add(new Option("不指定", "")); 
+                if (res.status === 'success') res.data.forEach(b => s.add(new Option(b.b_name, b.b_id))); 
+            }); 
+        }
+
+        function loadServices() { 
+            fetch(GAS_URL + `?action=reservation_service_list`).then(res => res.json()).then(res => { 
+                const s = document.getElementById('r_service'); 
+                s.innerHTML = ''; 
+                if (res.status === 'success') res.data.forEach(srv => s.add(new Option(srv.name, srv.code))); 
+            }); 
+        }
+
+        // ==========================================
+        // 4. 日曆初始化 (Flatpickr)
+        // ==========================================
+        function initFlatpickr() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            flatpickr("#r_date", {
+                locale: "zh_tw",      // 語言：繁體中文
+                minDate: tomorrow,    // 最小日期：明天 (今天以前自動變灰)
+                dateFormat: "Y-m-d",  // 格式：2023-10-10
+                
+                // ✅ 關鍵：手機模式設定
+                disableMobile: "true", // 強制在手機上也使用此介面 (若設為 false 會跳出原生滾輪，導致無法變灰)
+                
+                // ✅ 關鍵：一次只顯示一個月
+                showMonths: 1,
+
+                // ✅ 關鍵：自訂禁止日期 (店休日)
+                disable: [
+                    function(date) {
+                        // 如果該日期的星期幾 (0~6) 在店休日陣列中，則回傳 true (鎖住)
+                        return g_holidays.includes(date.getDay());
+                    }
+                ]
+            });
+        }
+
+        // ==========================================
+        // 5. 送出預約 (含 LINE 訊息發送)
+        // ==========================================
         function submitReservation() {
-            // 邏輯保持不變，直接複製上一版的 submitReservation 即可
+            // (1) 取得欄位
             const petSelect = document.getElementById('pet_select');
             const beauticianSelect = document.getElementById('beautician_select');
             const dateInput = document.getElementById('r_date');
@@ -162,22 +214,26 @@
             const srvSelect = document.getElementById('r_service');
             const btn = document.getElementById('btn-submit');
 
+            // (2) 取得值與文字
             const p_id = petSelect.value;
             const b_id = beauticianSelect.value;
             const date = dateInput.value;
             const time = timeInput.value;
             const srvCode = srvSelect.value;
 
+            // 取得選單的文字 (用於訊息顯示)
             let p_name = "";
             let s_name = "";
             if (petSelect.selectedIndex >= 0) p_name = petSelect.options[petSelect.selectedIndex].text;
             if (srvSelect.selectedIndex >= 0) s_name = srvSelect.options[srvSelect.selectedIndex].text;
 
+            // (3) 驗證
             if (!p_id || !date || !time || !srvCode) { 
                 Swal.fire('請檢查', '請填寫完整預約資訊', 'error'); 
                 return; 
             }
 
+            // (4) 鎖定按鈕
             btn.disabled = true; 
             btn.innerText = '處理中...';
 
@@ -189,35 +245,55 @@
                            `&time=${encodeURIComponent(time)}` + 
                            `&service=${encodeURIComponent(srvCode)}`;
 
+            // (5) 呼叫後端 API
             fetch(GAS_URL + params).then(res => res.json()).then(res => {
                 if (res.status === 'success') {
+                    
+                    // ✅ 成功：檢查是否在 LINE 內，發送訊息
                     if (liff.isInClient()) {
                         liff.sendMessages([
                             {
                                 "type": "text",
-                                "text": "✅ 預約申請已送出！\n------------------\n🐶 寵物名稱：" + p_name + "\n📅 預約日期：" + date + "\n⏰ 預約時間：" + time + "\n🛀 服務項目：" + s_name + "\n✨ 預約單號：" + res.r_id + "\n\n我們將盡快為您確認，謝謝！"
+                                "text": "✅ 預約申請已送出！\n" +
+                                        "------------------\n" +
+                                        "🐶 寵物名稱：" + p_name + "\n" +
+                                        "📅 預約日期：" + date + "\n" +
+                                        "⏰ 預約時間：" + time + "\n" +
+                                        "🛀 服務項目：" + s_name + "\n" +
+                                        "✨ 預約單號：" + res.r_id + "\n\n" +
+                                        "我們將盡快為您確認，謝謝！"
                             }
                         ]).then(() => {
-                            Swal.fire('預約成功', `預約單號：${res.r_id}`, 'success').then(() => liff.closeWindow());
+                            // 訊息發送成功 -> 顯示成功視窗 -> 關閉
+                            Swal.fire('預約成功', `預約單號：${res.r_id}`, 'success').then(() => {
+                                liff.closeWindow();
+                            });
                         }).catch((err) => {
-                            Swal.fire('預約成功', `預約單號：${res.r_id}`, 'success').then(() => liff.closeWindow());
+                            // 訊息發送失敗 (可能是權限問題) -> 顯示成功視窗 -> 關閉
+                            console.error('Message Error:', err);
+                            Swal.fire('預約成功', `預約單號：${res.r_id} (通知發送失敗)`, 'success').then(() => {
+                                liff.closeWindow();
+                            });
                         });
                     } else {
+                        // 不在 LINE 內 (一般瀏覽器)
                         Swal.fire('預約成功', `預約單號：${res.r_id}`, 'success');
-                        btn.disabled = false; btn.innerText = '送出預約';
+                        btn.disabled = false; 
+                        btn.innerText = '送出預約';
                     }
+
                 } else {
+                    // ❌ 失敗 (後端邏輯錯誤，如額滿或參數錯)
                     Swal.fire('預約失敗', res.message, 'error');
-                    btn.disabled = false; btn.innerText = '送出預約';
+                    btn.disabled = false; 
+                    btn.innerText = '送出預約';
                 }
             }).catch(() => { 
                 Swal.fire('連線錯誤', '請檢查網路連線', 'error'); 
-                btn.disabled = false; btn.innerText = '送出預約'; 
+                btn.disabled = false; 
+                btn.innerText = '送出預約'; 
             });
         }
-
-        function loadBeauticians() { fetch(GAS_URL + `?action=reservation_beautician_list`).then(res => res.json()).then(res => { const s = document.getElementById('beautician_select'); s.innerHTML = ''; s.add(new Option("不指定", "")); if (res.status === 'success') res.data.forEach(b => s.add(new Option(b.b_name, b.b_id))); }); }
-        function loadServices() { fetch(GAS_URL + `?action=reservation_service_list`).then(res => res.json()).then(res => { const s = document.getElementById('r_service'); s.innerHTML = ''; if (res.status === 'success') res.data.forEach(srv => s.add(new Option(srv.name, srv.code))); }); }
     </script>
 </body>
 </html>
