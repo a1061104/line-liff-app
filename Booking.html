@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>美容預約</title>
+    <title>OUT DOG 美容預約</title>
     
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -66,7 +66,7 @@
     <div id="loading-mask"><div style="font-weight:bold; font-size:18px; color:#d81b60;">資料讀取中...</div></div>
 
     <div class="container">
-        <h3>🛁 預約美容 / 住宿</h3>
+        <h3>🛁 預約美容</h3>
         <div class="form-group">
             <label>選擇寵物</label>
             <div class="input-group">
@@ -268,7 +268,7 @@
                 if (res.status === 'success' && res.data.length > 0) {
                     res.data.forEach(p => s.add(new Option(p.p_name, p.p_id)));
                 } else {
-                    Swal.fire('尚未建檔', '偵測到您尚未建立寵物檔案，請先完成建檔。', 'warning').then(() => { window.location.href = 'index.html'; });
+                    Swal.fire('尚未建檔', '偵測到您尚未建立寵物檔案，請先完成建檔。', 'warning').then(() => { window.location.href = 'Pet.html'; });
                 }
             });
         }
@@ -310,3 +310,4 @@
     </script>
 </body>
 </html>
+
