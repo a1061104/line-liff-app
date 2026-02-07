@@ -69,38 +69,28 @@
             display: flex; align-items: center; gap: 4px;
         }
 
-        /* 🚀 關鍵修改：容器高度與 Visual Cut-off */
+        /* 容器高度與 Visual Cut-off (2~3個選項) */
         .scroll-box {
             width: 100%; 
-            /* 設定容器高度 125px
-               配合選項高度 50px
-               125 / 50 = 2.5
-               結果：顯示 2.5 個選項 (第3個選項被切一半) 
-            */
-            height: 125px; 
+            height: 125px; /* 125px / 50px = 2.5 個選項 */
             overflow-y: auto;
             background: #fff; 
             border: 1px solid #eee; border-radius: 8px;
             text-align: center; 
             -webkit-overflow-scrolling: touch;
             position: relative;
-            /* 內陰影：上下加深，強化滾動感 */
             box-shadow: inset 0 10px 8px -8px rgba(0,0,0,0.08), inset 0 -10px 8px -8px rgba(0,0,0,0.08);
         }
 
-        /* 自訂 Scrollbar */
         .scroll-box::-webkit-scrollbar { width: 4px; }
         .scroll-box::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
         .scroll-box::-webkit-scrollbar-track { background: transparent; }
 
-        /* 🚀 關鍵修改：固定選項高度 */
         .time-option { 
-            height: 50px;           /* 強制高度 */
-            line-height: 50px;      /* 文字垂直置中 */
-            padding: 0;             /* 清除 padding 避免干擾計算 */
+            height: 50px; line-height: 50px; padding: 0;
             cursor: pointer; font-size: 16px; color: #555; 
             border-bottom: 1px solid #f9f9f9; transition: all 0.1s; 
-            box-sizing: border-box; /* 確保 border 包含在 height 內 */
+            box-sizing: border-box; 
         }
         
         .time-option:last-child { border-bottom: none; }
@@ -291,13 +281,24 @@
             closeTimeModal();
         }
 
+        // 🚀 關鍵修改：自動計算第一個可預約日 (跳過店休日)
         function initDatePicker() {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
+            let targetDate = new Date();
+            targetDate.setDate(targetDate.getDate() + 1); // 預設從明天開始
 
+            // 迴圈檢查：如果遇到店休日 (0~6)，就往後加一天
+            // 防止無限迴圈 (雖然不太可能全店休，但加個上限比較安全)
+            let safetyLimit = 0;
+            while (g_holidays.includes(targetDate.getDay()) && safetyLimit < 30) {
+                targetDate.setDate(targetDate.getDate() + 1);
+                safetyLimit++;
+            }
+
+            // 設定 Flatpickr
             flatpickr("#r_date", {
                 locale: "zh_tw",
-                minDate: tomorrow,
+                minDate: new Date().fp_incr(1), // 限制最小日期還是明天
+                defaultDate: targetDate,        // ✅ 預設選中我們計算出來的日期
                 dateFormat: "Y-m-d",
                 altInput: true,
                 altFormat: "Y-m-d (D)",
