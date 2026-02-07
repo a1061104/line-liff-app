@@ -35,35 +35,57 @@
             background-repeat: no-repeat; background-position: right 12px top 50%; background-size: 12px auto; padding-right: 30px;
         }
 
-        /* --- 🚀 新增：時間選擇按鈕樣式 --- */
-        .time-section { margin-bottom: 15px; }
-        .time-label-small { font-size: 12px; color: #888; margin-bottom: 5px; }
-        
-        .time-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr); /* 一行5個 */
-            gap: 8px;
-        }
-        
-        .time-btn {
+        /* --- 🚀 關鍵修改：雙欄滾動選擇器樣式 --- */
+        .picker-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
             border: 1px solid #ddd;
-            background-color: #fff;
-            color: #333;
-            padding: 8px 0;
-            text-align: center;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
         }
 
-        /* 選中狀態 */
-        .time-btn.active {
+        .picker-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .picker-title {
+            font-size: 12px; color: #888; margin-bottom: 5px; font-weight: bold;
+        }
+
+        .scroll-box {
+            width: 100%;
+            height: 150px; /* 固定高度，讓它可捲動 */
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            text-align: center;
+            /* 讓捲動更平滑 (iOS) */
+            -webkit-overflow-scrolling: touch; 
+        }
+
+        .time-option {
+            padding: 10px 0;
+            cursor: pointer;
+            font-size: 16px;
+            color: #555;
+            transition: all 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .time-option:hover { background-color: #fff0f5; }
+
+        /* 選中狀態：深粉色底、白字、放大 */
+        .time-option.selected {
             background-color: #d81b60;
             color: white;
-            border-color: #d81b60;
             font-weight: bold;
-            box-shadow: 0 2px 5px rgba(216, 27, 96, 0.3);
+            font-size: 18px;
         }
 
         .btn-small { height: 48px; white-space: nowrap; background-color: #ff9800; color: white; border: none; border-radius: 8px; padding: 0 15px; font-size: 14px; cursor: pointer; font-weight: bold; flex-shrink: 0; }
@@ -102,16 +124,17 @@
         <div class="form-group">
             <label>預約時間 <span id="time-hint" style="font-weight:normal; font-size:0.95em; color:#d81b60;"></span></label>
             
-            <div class="time-section">
-                <div class="time-label-small">選擇小時：</div>
-                <div id="hour-grid" class="time-grid">
-                    </div>
-            </div>
-            
-            <div class="time-section">
-                <div class="time-label-small">選擇分鐘：</div>
-                <div id="minute-grid" class="time-grid" style="grid-template-columns: repeat(6, 1fr);">
-                    </div>
+            <div class="picker-container">
+                <div class="picker-column">
+                    <div class="picker-title">選擇小時</div>
+                    <div id="hour-scroll" class="scroll-box">
+                        </div>
+                </div>
+                <div class="picker-column">
+                    <div class="picker-title">選擇分鐘</div>
+                    <div id="minute-scroll" class="scroll-box">
+                        </div>
+                </div>
             </div>
 
             <input type="hidden" id="hidden_hour">
@@ -156,7 +179,7 @@
                     g_closeTime = res.data.CLOSE_HOUR; 
                     g_holidays = res.data.WEEKLY_HOLIDAY || [];
                     
-                    document.getElementById('time-hint').innerText = `(營業時間 ${g_openTime}~${g_closeTime})`;
+                    document.getElementById('time-hint').innerText = `(${g_openTime} ~ ${g_closeTime})`;
                     
                     if (g_holidays.length > 0) {
                         const weekNames = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
@@ -167,59 +190,60 @@
 
                     // 初始化 UI
                     initDatePicker();
-                    initTimeButtons(g_openTime, g_closeTime);
+                    initScrollPicker(g_openTime, g_closeTime);
                 }
             });
         }
 
-        // 🚀 新增：初始化按鈕式時間選擇器
-        function initTimeButtons(startStr, endStr) {
-            const hourGrid = document.getElementById('hour-grid');
-            const minuteGrid = document.getElementById('minute-grid');
+        // 🚀 新增：初始化滾動選擇器
+        function initScrollPicker(startStr, endStr) {
+            const hourBox = document.getElementById('hour-scroll');
+            const minBox = document.getElementById('minute-scroll');
 
-            // 1. 產生小時按鈕
+            // 1. 產生小時列表
             const startH = parseInt(startStr.split(':')[0], 10);
             const endH = parseInt(endStr.split(':')[0], 10);
             
-            hourGrid.innerHTML = '';
+            hourBox.innerHTML = '';
             for (let h = startH; h <= endH; h++) {
                 const val = h.toString().padStart(2, '0');
-                const btn = document.createElement('div');
-                btn.className = 'time-btn';
-                btn.innerText = val;
-                btn.onclick = function() { selectHour(this, val); };
-                hourGrid.appendChild(btn);
+                const div = document.createElement('div');
+                div.className = 'time-option';
+                div.innerText = val + " 點";
+                div.setAttribute('data-val', val);
+                div.onclick = function() { selectItem(this, 'hour'); };
+                hourBox.appendChild(div);
             }
 
-            // 2. 產生分鐘按鈕 (00, 10, 20...)
+            // 2. 產生分鐘列表 (00, 10, 20...)
             const minutes = ["00", "10", "20", "30", "40", "50"];
-            minuteGrid.innerHTML = '';
+            minBox.innerHTML = '';
             minutes.forEach(m => {
-                const btn = document.createElement('div');
-                btn.className = 'time-btn';
-                btn.innerText = m;
-                btn.onclick = function() { selectMinute(this, m); };
-                minuteGrid.appendChild(btn);
+                const div = document.createElement('div');
+                div.className = 'time-option';
+                div.innerText = m + " 分";
+                div.setAttribute('data-val', m);
+                div.onclick = function() { selectItem(this, 'min'); };
+                minBox.appendChild(div);
             });
         }
 
-        // 點擊小時的邏輯
-        function selectHour(el, val) {
-            // 清除其他 active
-            const btns = document.querySelectorAll('#hour-grid .time-btn');
-            btns.forEach(b => b.classList.remove('active'));
-            // 設定當前 active
-            el.classList.add('active');
-            // 存入隱藏欄位
-            document.getElementById('hidden_hour').value = val;
-        }
+        // 處理點擊事件 (通用)
+        function selectItem(el, type) {
+            // 1. 清除該欄位的其他選中狀態
+            const containerId = type === 'hour' ? 'hour-scroll' : 'minute-scroll';
+            const inputId = type === 'hour' ? 'hidden_hour' : 'hidden_min';
+            
+            const siblings = document.getElementById(containerId).children;
+            for (let item of siblings) {
+                item.classList.remove('selected');
+            }
 
-        // 點擊分鐘的邏輯
-        function selectMinute(el, val) {
-            const btns = document.querySelectorAll('#minute-grid .time-btn');
-            btns.forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-            document.getElementById('hidden_min').value = val;
+            // 2. 設定當前選中
+            el.classList.add('selected');
+            
+            // 3. 存值
+            document.getElementById(inputId).value = el.getAttribute('data-val');
         }
 
         function initDatePicker() {
@@ -255,7 +279,7 @@
             const beauticianSelect = document.getElementById('beautician_select');
             const dateInput = document.getElementById('r_date');
             
-            // 🚀 修改：從隱藏欄位獲取時間
+            // 🚀 從隱藏欄位取值
             const hourVal = document.getElementById('hidden_hour').value;
             const minVal = document.getElementById('hidden_min').value;
 
@@ -280,7 +304,7 @@
 
             // 驗證
             if (!p_id || !date || !time || !srvCode) { 
-                Swal.fire('請檢查', '請選擇完整的時間 (小時與分鐘)', 'error'); 
+                Swal.fire('請檢查', '請選擇完整的時間 (點選小時與分鐘)', 'error'); 
                 return; 
             }
 
