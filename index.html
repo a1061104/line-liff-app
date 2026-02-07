@@ -39,7 +39,6 @@
 
         h2 {
             color: var(--text-main);
-            /* [修改] 將下方邊距從 30px 減少為 10px，拉近與下方卡片的距離 */
             margin: 20px 0 10px; 
             text-align: center;
             font-size: 24px;
@@ -56,9 +55,10 @@
             padding: 20px; 
             border-radius: var(--radius);
             box-shadow: var(--shadow);
-            margin-bottom: 30px;
+            margin-bottom: 20px; /* 稍微減少與下方按鈕的距離 */
             width: 100%;
-            max-width: 340px;
+            /* [修改] 將最大寬度改為 320px (原 340px)，並與下方按鈕統一 */
+            max-width: 320px; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -81,7 +81,8 @@
         }
 
         #qrcode {
-            margin: 10px 0;
+            /* [修改] 減少下方邊距，讓文字更靠近 (原 margin: 10px 0) */
+            margin: 10px 0 5px 0; 
             padding: 10px;
             background: white;
             border-radius: 12px;
@@ -105,7 +106,8 @@
             background: #f8f9fa;
             padding: 4px 12px;
             border-radius: 20px;
-            margin-top: 5px;
+            /* [修改] 移除上方邊距，讓它緊貼 QR Code (原 margin-top: 5px) */
+            margin-top: 0; 
         }
 
         /* Loading 動畫 */
@@ -140,7 +142,8 @@
 
         .menu-container {
             width: 100%;
-            max-width: 400px;
+            /* [修改] 將最大寬度統一為 320px (原 400px)，與 QR Code 區塊一致 */
+            max-width: 320px;
             display: grid;
             grid-template-columns: 1fr;
             gap: 16px;
