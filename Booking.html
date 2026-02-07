@@ -28,65 +28,62 @@
             -webkit-appearance: none; appearance: none; display: block; line-height: 48px; 
         }
 
-        #r_date { background-color: #fff; cursor: pointer; } 
+        #r_date, #r_time_display { background-color: #fff; cursor: pointer; } 
 
         .form-select {
             background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23d81b60%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat; background-position: right 12px top 50%; background-size: 12px auto; padding-right: 30px;
         }
 
-        /* --- 🚀 關鍵修改：雙欄滾動選擇器樣式 --- */
+        /* --- 🚀 彈跳視窗 (Modal) 樣式 --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 2000;
+            display: none; /* 預設隱藏 */
+            justify-content: center; align-items: center;
+        }
+
+        .modal-box {
+            background: white; width: 85%; max-width: 320px;
+            border-radius: 12px; padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #333; }
+
         .picker-container {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 10px;
-            border: 1px solid #ddd;
+            display: flex; gap: 10px; justify-content: center;
+            margin-bottom: 20px;
         }
 
-        .picker-column {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .picker-title {
-            font-size: 12px; color: #888; margin-bottom: 5px; font-weight: bold;
-        }
+        .picker-column { flex: 1; display: flex; flex-direction: column; align-items: center; }
+        .picker-title { font-size: 12px; color: #888; margin-bottom: 5px; font-weight: bold; }
 
         .scroll-box {
-            width: 100%;
-            height: 150px; /* 固定高度，讓它可捲動 */
-            overflow-y: auto;
-            background: white;
-            border: 1px solid #eee;
-            border-radius: 6px;
-            text-align: center;
-            /* 讓捲動更平滑 (iOS) */
-            -webkit-overflow-scrolling: touch; 
+            width: 100%; height: 150px; overflow-y: auto;
+            background: #f9f9f9; border: 1px solid #eee; border-radius: 6px;
+            text-align: center; -webkit-overflow-scrolling: touch; 
         }
 
         .time-option {
-            padding: 10px 0;
-            cursor: pointer;
-            font-size: 16px;
-            color: #555;
-            transition: all 0.2s;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 12px 0; cursor: pointer; font-size: 16px; color: #555;
+            border-bottom: 1px solid #f0f0f0; transition: all 0.2s;
         }
-
-        .time-option:hover { background-color: #fff0f5; }
-
-        /* 選中狀態：深粉色底、白字、放大 */
+        
         .time-option.selected {
-            background-color: #d81b60;
-            color: white;
-            font-weight: bold;
-            font-size: 18px;
+            background-color: #d81b60; color: white; font-weight: bold; font-size: 18px;
         }
+
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-cancel { background-color: #999; flex: 1; color: white; border: none; border-radius: 6px; padding: 10px; font-size: 16px; }
+        .btn-confirm { background-color: #d81b60; flex: 1; color: white; border: none; border-radius: 6px; padding: 10px; font-size: 16px; }
 
         .btn-small { height: 48px; white-space: nowrap; background-color: #ff9800; color: white; border: none; border-radius: 8px; padding: 0 15px; font-size: 14px; cursor: pointer; font-weight: bold; flex-shrink: 0; }
         .btn { width: 100%; padding: 14px; background-color: #d81b60; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; margin-top: 15px; }
@@ -124,21 +121,9 @@
         <div class="form-group">
             <label>預約時間 <span id="time-hint" style="font-weight:normal; font-size:0.95em; color:#d81b60;"></span></label>
             
-            <div class="picker-container">
-                <div class="picker-column">
-                    <div class="picker-title">選擇小時</div>
-                    <div id="hour-scroll" class="scroll-box">
-                        </div>
-                </div>
-                <div class="picker-column">
-                    <div class="picker-title">選擇分鐘</div>
-                    <div id="minute-scroll" class="scroll-box">
-                        </div>
-                </div>
-            </div>
-
-            <input type="hidden" id="hidden_hour">
-            <input type="hidden" id="hidden_min">
+            <input type="text" id="r_time_display" class="form-control" placeholder="請點選選擇時間" readonly onclick="openTimeModal()">
+            
+            <input type="hidden" id="r_time_value">
         </div>
         
         <div class="form-group">
@@ -147,6 +132,31 @@
         </div>
         
         <button id="btn-submit" class="btn" onclick="submitReservation()">送出預約</button>
+    </div>
+
+    <div id="timeModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">請選擇預約時間</div>
+            
+            <div class="picker-container">
+                <div class="picker-column">
+                    <div class="picker-title">小時</div>
+                    <div id="hour-scroll" class="scroll-box"></div>
+                </div>
+                <div class="picker-column">
+                    <div class="picker-title">分鐘</div>
+                    <div id="minute-scroll" class="scroll-box"></div>
+                </div>
+            </div>
+
+            <input type="hidden" id="temp_hour">
+            <input type="hidden" id="temp_min">
+
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeTimeModal()">取消</button>
+                <button class="btn-confirm" onclick="confirmTimeSelection()">確定</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -188,62 +198,85 @@
                         document.getElementById('holiday-info').innerText = `💡 本店每週（${hNames}）固定店休。`;
                     }
 
-                    // 初始化 UI
                     initDatePicker();
-                    initScrollPicker(g_openTime, g_closeTime);
+                    // 初始化 Modal 內的選項
+                    initModalPicker(g_openTime, g_closeTime);
                 }
             });
         }
 
-        // 🚀 新增：初始化滾動選擇器
-        function initScrollPicker(startStr, endStr) {
+        // 🚀 初始化 Modal 內的滾動列表
+        function initModalPicker(startStr, endStr) {
             const hourBox = document.getElementById('hour-scroll');
             const minBox = document.getElementById('minute-scroll');
 
-            // 1. 產生小時列表
             const startH = parseInt(startStr.split(':')[0], 10);
             const endH = parseInt(endStr.split(':')[0], 10);
             
+            // 產生小時
             hourBox.innerHTML = '';
             for (let h = startH; h <= endH; h++) {
                 const val = h.toString().padStart(2, '0');
                 const div = document.createElement('div');
                 div.className = 'time-option';
-                div.innerText = val + " 點";
-                div.setAttribute('data-val', val);
-                div.onclick = function() { selectItem(this, 'hour'); };
+                div.innerText = val;
+                div.onclick = function() { selectTempItem(this, 'hour', val); };
                 hourBox.appendChild(div);
             }
 
-            // 2. 產生分鐘列表 (00, 10, 20...)
+            // 產生分鐘
             const minutes = ["00", "10", "20", "30", "40", "50"];
             minBox.innerHTML = '';
             minutes.forEach(m => {
                 const div = document.createElement('div');
                 div.className = 'time-option';
-                div.innerText = m + " 分";
-                div.setAttribute('data-val', m);
-                div.onclick = function() { selectItem(this, 'min'); };
+                div.innerText = m;
+                div.onclick = function() { selectTempItem(this, 'min', m); };
                 minBox.appendChild(div);
             });
         }
 
-        // 處理點擊事件 (通用)
-        function selectItem(el, type) {
-            // 1. 清除該欄位的其他選中狀態
+        // 🚀 開啟 Modal
+        function openTimeModal() {
+            document.getElementById('timeModal').style.display = 'flex';
+        }
+
+        // 🚀 關閉 Modal
+        function closeTimeModal() {
+            document.getElementById('timeModal').style.display = 'none';
+        }
+
+        // 🚀 Modal 內的選擇邏輯 (暫存)
+        function selectTempItem(el, type, val) {
             const containerId = type === 'hour' ? 'hour-scroll' : 'minute-scroll';
-            const inputId = type === 'hour' ? 'hidden_hour' : 'hidden_min';
+            const inputId = type === 'hour' ? 'temp_hour' : 'temp_min';
             
+            // 清除同欄位樣式
             const siblings = document.getElementById(containerId).children;
-            for (let item of siblings) {
-                item.classList.remove('selected');
+            for (let item of siblings) item.classList.remove('selected');
+
+            // 設定選中
+            el.classList.add('selected');
+            document.getElementById(inputId).value = val;
+        }
+
+        // 🚀 按下「確定」後的邏輯
+        function confirmTimeSelection() {
+            const h = document.getElementById('temp_hour').value;
+            const m = document.getElementById('temp_min').value;
+
+            if (!h || !m) {
+                Swal.fire('提示', '請選擇小時與分鐘', 'info');
+                return;
             }
 
-            // 2. 設定當前選中
-            el.classList.add('selected');
+            const fullTime = `${h}:${m}`;
+            // 顯示在畫面上
+            document.getElementById('r_time_display').value = fullTime;
+            // 存入實際隱藏值
+            document.getElementById('r_time_value').value = fullTime;
             
-            // 3. 存值
-            document.getElementById(inputId).value = el.getAttribute('data-val');
+            closeTimeModal();
         }
 
         function initDatePicker() {
@@ -256,9 +289,7 @@
                 dateFormat: "Y-m-d",
                 disableMobile: "true",
                 showMonths: 1,
-                disable: [
-                    function(date) { return g_holidays.includes(date.getDay()); }
-                ]
+                disable: [ function(date) { return g_holidays.includes(date.getDay()); } ]
             });
         }
 
@@ -279,9 +310,8 @@
             const beauticianSelect = document.getElementById('beautician_select');
             const dateInput = document.getElementById('r_date');
             
-            // 🚀 從隱藏欄位取值
-            const hourVal = document.getElementById('hidden_hour').value;
-            const minVal = document.getElementById('hidden_min').value;
+            // 🚀 修改：取得時間 (從 hidden value)
+            const timeVal = document.getElementById('r_time_value').value;
 
             const srvSelect = document.getElementById('r_service');
             const btn = document.getElementById('btn-submit');
@@ -291,20 +321,13 @@
             const date = dateInput.value;
             const srvCode = srvSelect.value;
 
-            // 組合時間
-            let time = "";
-            if (hourVal && minVal) {
-                time = `${hourVal}:${minVal}`;
-            }
-
             let p_name = "";
             let s_name = "";
             if (petSelect.selectedIndex >= 0) p_name = petSelect.options[petSelect.selectedIndex].text;
             if (srvSelect.selectedIndex >= 0) s_name = srvSelect.options[srvSelect.selectedIndex].text;
 
-            // 驗證
-            if (!p_id || !date || !time || !srvCode) { 
-                Swal.fire('請檢查', '請選擇完整的時間 (點選小時與分鐘)', 'error'); 
+            if (!p_id || !date || !timeVal || !srvCode) { 
+                Swal.fire('請檢查', '請填寫完整資訊 (含時間)', 'error'); 
                 return; 
             }
 
@@ -315,7 +338,7 @@
                            `&p_id=${encodeURIComponent(p_id)}` + 
                            `&b_id=${encodeURIComponent(b_id)}` + 
                            `&date=${encodeURIComponent(date)}` + 
-                           `&time=${encodeURIComponent(time)}` + 
+                           `&time=${encodeURIComponent(timeVal)}` + 
                            `&service=${encodeURIComponent(srvCode)}`;
 
             fetch(GAS_URL + params).then(res => res.json()).then(res => {
@@ -324,7 +347,7 @@
                         liff.sendMessages([
                             {
                                 "type": "text",
-                                "text": "✅ 預約申請已送出！\n------------------\n🐶 寵物名稱：" + p_name + "\n📅 預約日期：" + date + "\n⏰ 預約時間：" + time + "\n🛀 服務項目：" + s_name + "\n✨ 預約單號：" + res.r_id + "\n\n我們將盡快為您確認，謝謝！"
+                                "text": "✅ 預約申請已送出！\n------------------\n🐶 寵物名稱：" + p_name + "\n📅 預約日期：" + date + "\n⏰ 預約時間：" + timeVal + "\n🛀 服務項目：" + s_name + "\n✨ 預約單號：" + res.r_id + "\n\n我們將盡快為您確認，謝謝！"
                             }
                         ]).then(() => {
                             Swal.fire('預約成功', `預約單號：${res.r_id}`, 'success').then(() => liff.closeWindow());
