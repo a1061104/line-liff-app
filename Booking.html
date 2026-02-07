@@ -52,39 +52,40 @@
 
         .modal-box {
             background: white; width: 85%; max-width: 320px;
-            border-radius: 16px; padding: 20px;
+            border-radius: 16px; padding: 25px 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             text-align: center; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         
         .modal-overlay.show .modal-box { transform: scale(1); }
 
-        .modal-header { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #333; }
+        .modal-header { font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #333; }
 
-        .picker-container { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        .picker-container { display: flex; gap: 15px; justify-content: center; margin-bottom: 20px; }
         .picker-column { flex: 1; display: flex; flex-direction: column; align-items: center; }
         
         .picker-title { 
-            font-size: 12px; color: #888; margin-bottom: 5px; font-weight: bold; 
+            font-size: 12px; color: #888; margin-bottom: 8px; font-weight: bold; 
             display: flex; align-items: center; gap: 4px;
         }
 
-        /* 🚀 關鍵修改：容器高度與視覺切斷 */
+        /* 🚀 關鍵修改：容器高度與 Visual Cut-off */
         .scroll-box {
             width: 100%; 
-            /* 每個選項高度約 45px (padding 12*2 + font 16 + border 1)
-               設定 160px 大約可以顯示 3.5 個選項 (160 / 45 = 3.55)
-               這樣第4個選項就會被切一半，暗示可滑動
+            /* 設定容器高度 125px
+               配合選項高度 50px
+               125 / 50 = 2.5
+               結果：顯示 2.5 個選項 (第3個選項被切一半) 
             */
-            height: 160px; 
+            height: 125px; 
             overflow-y: auto;
             background: #fff; 
             border: 1px solid #eee; border-radius: 8px;
             text-align: center; 
             -webkit-overflow-scrolling: touch;
             position: relative;
-            /* 內陰影加強深邃感 */
-            box-shadow: inset 0 6px 6px -6px rgba(0,0,0,0.1), inset 0 -6px 6px -6px rgba(0,0,0,0.1);
+            /* 內陰影：上下加深，強化滾動感 */
+            box-shadow: inset 0 10px 8px -8px rgba(0,0,0,0.08), inset 0 -10px 8px -8px rgba(0,0,0,0.08);
         }
 
         /* 自訂 Scrollbar */
@@ -92,10 +93,14 @@
         .scroll-box::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
         .scroll-box::-webkit-scrollbar-track { background: transparent; }
 
+        /* 🚀 關鍵修改：固定選項高度 */
         .time-option { 
-            padding: 12px 0; /* 調整 Padding 控制單個選項高度 */
+            height: 50px;           /* 強制高度 */
+            line-height: 50px;      /* 文字垂直置中 */
+            padding: 0;             /* 清除 padding 避免干擾計算 */
             cursor: pointer; font-size: 16px; color: #555; 
             border-bottom: 1px solid #f9f9f9; transition: all 0.1s; 
+            box-sizing: border-box; /* 確保 border 包含在 height 內 */
         }
         
         .time-option:last-child { border-bottom: none; }
