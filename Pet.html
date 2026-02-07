@@ -206,8 +206,8 @@
                         showConfirmButton: false, 
                         timer: 1500 
                     }).then(() => { 
-                        // ✅ 修改點：跳轉回會員中心頁面
-                        window.location.href = GAS_URL + '?page=customer'; 
+                        // ✅ 修改點：直接跳轉回首頁 (不帶 page 參數)
+                        window.location.href = GAS_URL; 
                     });
                 } 
             }).catch(err => { 
