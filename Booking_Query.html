@@ -11,20 +11,21 @@
         body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         h2 { margin: 10px 0 20px; color: var(--text-main); }
         .list-container { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; }
-        .booking-card { background: var(--card-bg); padding: 20px; border-radius: var(--radius); box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 10px; }
+        .booking-card { background: var(--card-bg); padding: 20px; border-radius: var(--radius); box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px; }
         .booking-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background-color: var(--primary-color); }
-        .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 5px; }
         .date-badge { font-weight: 700; font-size: 18px; color: var(--primary-color); }
-        .card-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-main); }
+        .card-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-main); line-height: 1.6; }
         .label { color: var(--text-sub); }
         .val { font-weight: 500; }
+        .pet-name { color: #d35400; font-weight: 700; font-size: 16px; }
         #loading, #no-data { text-align: center; color: var(--text-sub); margin-top: 50px; display: none; }
-        .back-btn { margin-top: 20px; color: var(--text-sub); text-decoration: none; font-size: 14px; }
+        .back-btn { margin-top: 25px; color: var(--text-sub); text-decoration: none; font-size: 14px; }
     </style>
 </head>
 <body>
     <h2>📅 我的預約紀錄</h2>
-    <div id="loading">載入資料中...</div>
+    <div id="loading">正在讀取預約資料...</div>
     <div id="no-data">目前沒有符合條件的預約紀錄</div>
     <div class="list-container" id="list-area"></div>
     <a href="index.html" class="back-btn">‹ 返回會員中心</a>
@@ -40,7 +41,7 @@
                     if (!liff.isLoggedIn()) { liff.login(); } 
                     else { liff.getProfile().then(p => fetchHistory(p.userId)); }
                 })
-                .catch(err => document.getElementById('loading').innerText = 'LIFF 失敗');
+                .catch(err => document.getElementById('loading').innerText = 'LIFF 初始化失敗');
         };
 
         function fetchHistory(u_id) {
@@ -50,7 +51,8 @@
                     document.getElementById('loading').style.display = 'none';
                     if (res.status === 'success' && res.data.length > 0) { render(res.data); } 
                     else { document.getElementById('no-data').style.display = 'block'; }
-                });
+                })
+                .catch(() => { document.getElementById('loading').innerText = '資料傳輸錯誤'; });
         }
 
         function render(data) {
@@ -58,11 +60,21 @@
             area.innerHTML = data.map(item => `
                 <div class="booking-card">
                     <div class="card-header">
-                        <div class="date-badge"><span>${item.rDate}</span> <small style="margin-left:5px;">${item.startTime}</small></div>
-                        <div style="font-size: 12px; color: #06c755;">預約有效</div>
+                        <div class="date-badge">
+                            <span>${item.rDate}</span> 
+                            <small style="margin-left:5px; font-weight:normal; color:#666;">${item.startTime}</small>
+                        </div>
+                        <div style="font-size: 12px; color: #06c755; font-weight:bold;">已預約</div>
                     </div>
-                    <div class="card-row"><span class="label">預約編號</span><span class="val">${item.rId}</span></div>
-                    <div class="card-row"><span class="label">寵物 ID</span><span class="val">${item.pId}</span></div>
+                    <div class="card-row">
+                        <span class="label">預約編號</span><span class="val">${item.rId}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="label">寵物名稱</span><span class="val pet-name">${item.pName}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="label">寵物 ID</span><span class="val">${item.pId}</span>
+                    </div>
                 </div>
             `).join('');
         }
