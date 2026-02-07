@@ -35,52 +35,38 @@
             background-repeat: no-repeat; background-position: right 12px top 50%; background-size: 12px auto; padding-right: 30px;
         }
 
-        /* --- 🚀 彈跳視窗 (Modal) 樣式 --- */
+        /* --- 🚀 優化 1：Flatpickr 日曆改為粉色主題 --- */
+        .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange, .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus, .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover, .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay, .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay {
+            background: #d81b60;
+            border-color: #d81b60;
+        }
+        .flatpickr-day.today { border-color: #d81b60; }
+        .flatpickr-day.today:hover { background: #fce4ec; color: #d81b60; }
+
+        /* --- 彈跳視窗 (Modal) 樣式 (時間選擇用) --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); z-index: 2000;
-            display: none; /* 預設隱藏 */
-            justify-content: center; align-items: center;
+            display: none; justify-content: center; align-items: center;
         }
-
         .modal-box {
             background: white; width: 85%; max-width: 320px;
             border-radius: 12px; padding: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            text-align: center;
-            animation: popIn 0.3s ease;
+            text-align: center; animation: popIn 0.3s ease;
         }
-
-        @keyframes popIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .modal-header { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #333; }
-
-        .picker-container {
-            display: flex; gap: 10px; justify-content: center;
-            margin-bottom: 20px;
-        }
-
+        .picker-container { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
         .picker-column { flex: 1; display: flex; flex-direction: column; align-items: center; }
         .picker-title { font-size: 12px; color: #888; margin-bottom: 5px; font-weight: bold; }
-
         .scroll-box {
             width: 100%; height: 150px; overflow-y: auto;
             background: #f9f9f9; border: 1px solid #eee; border-radius: 6px;
             text-align: center; -webkit-overflow-scrolling: touch; 
         }
-
-        .time-option {
-            padding: 12px 0; cursor: pointer; font-size: 16px; color: #555;
-            border-bottom: 1px solid #f0f0f0; transition: all 0.2s;
-        }
-        
-        .time-option.selected {
-            background-color: #d81b60; color: white; font-weight: bold; font-size: 18px;
-        }
-
+        .time-option { padding: 12px 0; cursor: pointer; font-size: 16px; color: #555; border-bottom: 1px solid #f0f0f0; transition: all 0.2s; }
+        .time-option.selected { background-color: #d81b60; color: white; font-weight: bold; font-size: 18px; }
         .modal-actions { display: flex; gap: 10px; }
         .btn-cancel { background-color: #999; flex: 1; color: white; border: none; border-radius: 6px; padding: 10px; font-size: 16px; }
         .btn-confirm { background-color: #d81b60; flex: 1; color: white; border: none; border-radius: 6px; padding: 10px; font-size: 16px; }
@@ -120,9 +106,7 @@
         
         <div class="form-group">
             <label>預約時間 <span id="time-hint" style="font-weight:normal; font-size:0.95em; color:#d81b60;"></span></label>
-            
             <input type="text" id="r_time_display" class="form-control" placeholder="請點選選擇時間" readonly onclick="openTimeModal()">
-            
             <input type="hidden" id="r_time_value">
         </div>
         
@@ -137,7 +121,6 @@
     <div id="timeModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">請選擇預約時間</div>
-            
             <div class="picker-container">
                 <div class="picker-column">
                     <div class="picker-title">小時</div>
@@ -148,10 +131,8 @@
                     <div id="minute-scroll" class="scroll-box"></div>
                 </div>
             </div>
-
             <input type="hidden" id="temp_hour">
             <input type="hidden" id="temp_min">
-
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeTimeModal()">取消</button>
                 <button class="btn-confirm" onclick="confirmTimeSelection()">確定</button>
@@ -172,7 +153,6 @@
             loadSettings(); 
             loadBeauticians(); 
             loadServices();
-            
             liff.init({ liffId: MY_LIFF_ID }).then(() => {
                 if (!liff.isLoggedIn()) { liff.login(); } 
                 else { liff.getProfile().then(p => { currentUserId = p.userId; loadUserPets(); }); }
@@ -198,22 +178,37 @@
                         document.getElementById('holiday-info').innerText = `💡 本店每週（${hNames}）固定店休。`;
                     }
 
+                    // 初始化日期與時間
                     initDatePicker();
-                    // 初始化 Modal 內的選項
                     initModalPicker(g_openTime, g_closeTime);
                 }
             });
         }
 
-        // 🚀 初始化 Modal 內的滾動列表
+        // --- 🚀 優化 2：日期選擇器 (新增 altFormat 顯示週幾) ---
+        function initDatePicker() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            flatpickr("#r_date", {
+                locale: "zh_tw",
+                minDate: tomorrow,
+                dateFormat: "Y-m-d",     // 後端實際接收的格式 (如 2023-10-20)
+                altInput: true,          // 啟用替代顯示輸入框
+                altFormat: "Y-m-d (D)",  // 顯示格式 (如 2023-10-20 (週五))
+                disableMobile: "true",
+                showMonths: 1,
+                disable: [ function(date) { return g_holidays.includes(date.getDay()); } ]
+            });
+        }
+
+        // --- 以下為時間選擇器 Modal 邏輯 (維持不變) ---
         function initModalPicker(startStr, endStr) {
             const hourBox = document.getElementById('hour-scroll');
             const minBox = document.getElementById('minute-scroll');
-
             const startH = parseInt(startStr.split(':')[0], 10);
             const endH = parseInt(endStr.split(':')[0], 10);
             
-            // 產生小時
             hourBox.innerHTML = '';
             for (let h = startH; h <= endH; h++) {
                 const val = h.toString().padStart(2, '0');
@@ -224,7 +219,6 @@
                 hourBox.appendChild(div);
             }
 
-            // 產生分鐘
             const minutes = ["00", "10", "20", "30", "40", "50"];
             minBox.innerHTML = '';
             minutes.forEach(m => {
@@ -236,63 +230,29 @@
             });
         }
 
-        // 🚀 開啟 Modal
-        function openTimeModal() {
-            document.getElementById('timeModal').style.display = 'flex';
-        }
+        function openTimeModal() { document.getElementById('timeModal').style.display = 'flex'; }
+        function closeTimeModal() { document.getElementById('timeModal').style.display = 'none'; }
 
-        // 🚀 關閉 Modal
-        function closeTimeModal() {
-            document.getElementById('timeModal').style.display = 'none';
-        }
-
-        // 🚀 Modal 內的選擇邏輯 (暫存)
         function selectTempItem(el, type, val) {
             const containerId = type === 'hour' ? 'hour-scroll' : 'minute-scroll';
             const inputId = type === 'hour' ? 'temp_hour' : 'temp_min';
-            
-            // 清除同欄位樣式
             const siblings = document.getElementById(containerId).children;
             for (let item of siblings) item.classList.remove('selected');
-
-            // 設定選中
             el.classList.add('selected');
             document.getElementById(inputId).value = val;
         }
 
-        // 🚀 按下「確定」後的邏輯
         function confirmTimeSelection() {
             const h = document.getElementById('temp_hour').value;
             const m = document.getElementById('temp_min').value;
-
-            if (!h || !m) {
-                Swal.fire('提示', '請選擇小時與分鐘', 'info');
-                return;
-            }
-
+            if (!h || !m) { Swal.fire('提示', '請選擇小時與分鐘', 'info'); return; }
             const fullTime = `${h}:${m}`;
-            // 顯示在畫面上
             document.getElementById('r_time_display').value = fullTime;
-            // 存入實際隱藏值
             document.getElementById('r_time_value').value = fullTime;
-            
             closeTimeModal();
         }
 
-        function initDatePicker() {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-
-            flatpickr("#r_date", {
-                locale: "zh_tw",
-                minDate: tomorrow,
-                dateFormat: "Y-m-d",
-                disableMobile: "true",
-                showMonths: 1,
-                disable: [ function(date) { return g_holidays.includes(date.getDay()); } ]
-            });
-        }
-
+        // --- 其他輔助函式 ---
         function loadUserPets() {
             fetch(GAS_URL + `?action=pet_query_list&u_id=${encodeURIComponent(currentUserId)}`).then(res => res.json()).then(res => {
                 document.getElementById('loading-mask').style.display = 'none';
@@ -308,11 +268,9 @@
         function submitReservation() {
             const petSelect = document.getElementById('pet_select');
             const beauticianSelect = document.getElementById('beautician_select');
-            const dateInput = document.getElementById('r_date');
-            
-            // 🚀 修改：取得時間 (從 hidden value)
+            // 注意：因為開啟了 altInput，原始 id='r_date' 的 input 會被隱藏，但 value 依然會更新，所以取值邏輯不變
+            const dateInput = document.getElementById('r_date'); 
             const timeVal = document.getElementById('r_time_value').value;
-
             const srvSelect = document.getElementById('r_service');
             const btn = document.getElementById('btn-submit');
 
@@ -326,10 +284,7 @@
             if (petSelect.selectedIndex >= 0) p_name = petSelect.options[petSelect.selectedIndex].text;
             if (srvSelect.selectedIndex >= 0) s_name = srvSelect.options[srvSelect.selectedIndex].text;
 
-            if (!p_id || !date || !timeVal || !srvCode) { 
-                Swal.fire('請檢查', '請填寫完整資訊 (含時間)', 'error'); 
-                return; 
-            }
+            if (!p_id || !date || !timeVal || !srvCode) { Swal.fire('請檢查', '請填寫完整資訊 (含時間)', 'error'); return; }
 
             btn.disabled = true; btn.innerText = '處理中...';
 
@@ -344,16 +299,11 @@
             fetch(GAS_URL + params).then(res => res.json()).then(res => {
                 if (res.status === 'success') {
                     if (liff.isInClient()) {
-                        liff.sendMessages([
-                            {
-                                "type": "text",
-                                "text": "✅ 預約申請已送出！\n------------------\n🐶 寵物名稱：" + p_name + "\n📅 預約日期：" + date + "\n⏰ 預約時間：" + timeVal + "\n🛀 服務項目：" + s_name + "\n✨ 預約單號：" + res.r_id + "\n\n我們將盡快為您確認，謝謝！"
-                            }
-                        ]).then(() => {
-                            Swal.fire('預約成功', `預約單號：${res.r_id}`, 'success').then(() => liff.closeWindow());
-                        }).catch((err) => {
-                            Swal.fire('預約成功', `預約單號：${res.r_id}`, 'success').then(() => liff.closeWindow());
-                        });
+                        liff.sendMessages([{
+                            "type": "text",
+                            "text": "✅ 預約申請已送出！\n------------------\n🐶 寵物名稱：" + p_name + "\n📅 預約日期：" + date + "\n⏰ 預約時間：" + timeVal + "\n🛀 服務項目：" + s_name + "\n✨ 預約單號：" + res.r_id + "\n\n我們將盡快為您確認，謝謝！"
+                        }]).then(() => { Swal.fire('預約成功', `預約單號：${res.r_id}`, 'success').then(() => liff.closeWindow()); })
+                        .catch(() => { Swal.fire('預約成功', `預約單號：${res.r_id}`, 'success').then(() => liff.closeWindow()); });
                     } else {
                         Swal.fire('預約成功', `預約單號：${res.r_id}`, 'success');
                         btn.disabled = false; btn.innerText = '送出預約';
@@ -362,10 +312,7 @@
                     Swal.fire('預約失敗', res.message, 'error');
                     btn.disabled = false; btn.innerText = '送出預約';
                 }
-            }).catch(() => { 
-                Swal.fire('連線錯誤', '請檢查網路連線', 'error'); 
-                btn.disabled = false; btn.innerText = '送出預約'; 
-            });
+            }).catch(() => { Swal.fire('連線錯誤', '請檢查網路連線', 'error'); btn.disabled = false; btn.innerText = '送出預約'; });
         }
 
         function loadBeauticians() { fetch(GAS_URL + `?action=reservation_beautician_list`).then(res => res.json()).then(res => { const s = document.getElementById('beautician_select'); s.innerHTML = ''; s.add(new Option("不指定", "")); if (res.status === 'success') res.data.forEach(b => s.add(new Option(b.b_name, b.b_id))); }); }
