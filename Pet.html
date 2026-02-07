@@ -179,7 +179,6 @@
         function toggleWariness(cb) { if (cb.checked) { document.querySelectorAll('#wariness-list input[type="checkbox"]').forEach(el => el.checked = false); document.querySelectorAll('#wariness-list input[type="text"]').forEach(el => el.value = ''); } }
         function onWarinessItemChange() { document.getElementById('pw_none').checked = false; }
 
-        // 🚀 修改重點：使用 SweetAlert2 儲存成功視窗
         function savePet() {
             const name = document.getElementById('p_name').value, breeds = document.getElementById('p_breeds').value;
             if (!name || !breeds) { 
@@ -206,7 +205,10 @@
                         title: '儲存成功！', 
                         showConfirmButton: false, 
                         timer: 1500 
-                    }).then(() => { location.reload(); });
+                    }).then(() => { 
+                        // ✅ 修改點：跳轉回會員中心頁面
+                        window.location.href = GAS_URL + '?page=customer'; 
+                    });
                 } 
             }).catch(err => { 
                 Swal.fire({ icon: 'error', title: '連線失敗', text: '請檢查網路連線' });
@@ -220,4 +222,3 @@
     </script>
 </body>
 </html>
-
