@@ -6,142 +6,65 @@
     <title>預約紀錄查詢</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
     <style>
-        :root {
-            --primary-color: #2e86de;
-            --bg-color: #f0f2f5;
-            --card-bg: #ffffff;
-            --text-main: #333333;
-            --text-sub: #888888;
-            --radius: 16px;
-        }
-
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: var(--bg-color);
-            margin: 0; padding: 20px;
-            display: flex; flex-direction: column; align-items: center;
-        }
-
+        :root { --primary-color: #2e86de; --bg-color: #f0f2f5; --card-bg: #ffffff; --text-main: #333333; --text-sub: #888888; --radius: 16px; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         h2 { margin: 10px 0 20px; color: var(--text-main); }
-
-        .list-container {
-            width: 100%; max-width: 400px;
-            display: flex; flex-direction: column; gap: 15px;
-        }
-
-        .booking-card {
-            background: var(--card-bg); padding: 20px; border-radius: var(--radius);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            position: relative; overflow: hidden;
-            display: flex; flex-direction: column; gap: 10px;
-        }
-
-        .booking-card::before {
-            content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-            width: 5px; background-color: var(--primary-color);
-        }
-
-        .card-header {
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid #eee; padding-bottom: 10px;
-        }
-
+        .list-container { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; }
+        .booking-card { background: var(--card-bg); padding: 20px; border-radius: var(--radius); box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 10px; }
+        .booking-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background-color: var(--primary-color); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         .date-badge { font-weight: 700; font-size: 18px; color: var(--primary-color); }
-
         .card-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-main); }
         .label { color: var(--text-sub); }
         .val { font-weight: 500; }
-
         #loading, #no-data { text-align: center; color: var(--text-sub); margin-top: 50px; display: none; }
-        
-        .back-btn {
-            margin-top: 20px; color: var(--text-sub); text-decoration: none; font-size: 14px;
-        }
+        .back-btn { margin-top: 20px; color: var(--text-sub); text-decoration: none; font-size: 14px; }
     </style>
 </head>
 <body>
-
     <h2>📅 我的預約紀錄</h2>
-
     <div id="loading">載入資料中...</div>
     <div id="no-data">目前沒有符合條件的預約紀錄</div>
-
     <div class="list-container" id="list-area"></div>
-
     <a href="index.html" class="back-btn">‹ 返回會員中心</a>
 
     <script>
         const MY_LIFF_ID = '2008965576-txfwY86y'; 
-        // 請確保此處為您 GAS 部署後的網址
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbxzciNP_1cdq9XBnfcgTj5gv_QEt2xk-cevUsocHJx5j4IxjhJvS9DHHz1hhPXzDQHl/exec';
 
-        window.onload = function() {
+        window.onload = () => {
             document.getElementById('loading').style.display = 'block';
-            initializeLiff();
-        };
-
-        function initializeLiff() {
             liff.init({ liffId: MY_LIFF_ID })
                 .then(() => {
-                    if (!liff.isLoggedIn()) {
-                        liff.login();
-                    } else {
-                        liff.getProfile().then(profile => {
-                            fetchBookingHistory(profile.userId);
-                        });
-                    }
+                    if (!liff.isLoggedIn()) { liff.login(); } 
+                    else { liff.getProfile().then(p => fetchHistory(p.userId)); }
                 })
-                .catch(err => {
-                    document.getElementById('loading').innerText = 'LIFF 初始化失敗';
-                });
-        }
+                .catch(err => document.getElementById('loading').innerText = 'LIFF 失敗');
+        };
 
-        function fetchBookingHistory(userId) {
-            const url = `${GAS_URL}?action=get_booking_history&u_id=${encodeURIComponent(userId)}`;
-
-            fetch(url)
+        function fetchHistory(u_id) {
+            fetch(`${GAS_URL}?action=get_booking_history&u_id=${encodeURIComponent(u_id)}`)
                 .then(res => res.json())
-                .then(data => {
+                .then(res => {
                     document.getElementById('loading').style.display = 'none';
-                    if (data.status === 'success' && data.data.length > 0) {
-                        renderList(data.data);
-                    } else {
-                        document.getElementById('no-data').style.display = 'block';
-                    }
-                })
-                .catch(err => {
-                    document.getElementById('loading').innerText = '資料讀取失敗';
+                    if (res.status === 'success' && res.data.length > 0) { render(res.data); } 
+                    else { document.getElementById('no-data').style.display = 'block'; }
                 });
         }
 
-        function renderList(bookings) {
-            const container = document.getElementById('list-area');
-            container.innerHTML = '';
-
-            bookings.forEach(item => {
-                const html = `
-                    <div class="booking-card">
-                        <div class="card-header">
-                            <div class="date-badge">
-                                <span>${item.rDate}</span>
-                                <span style="font-size:14px; font-weight:normal; margin-left:5px;">${item.startTime}</span>
-                            </div>
-                            <div style="font-size: 12px; color: #06c755;">預約有效</div>
-                        </div>
-                        <div class="card-row">
-                            <span class="label">預約編號 (R_ID)</span>
-                            <span class="val">${item.rId}</span>
-                        </div>
-                        <div class="card-row">
-                            <span class="label">寵物 ID (P_ID)</span>
-                            <span class="val">${item.pId}</span>
-                        </div>
+        function render(data) {
+            const area = document.getElementById('list-area');
+            area.innerHTML = data.map(item => `
+                <div class="booking-card">
+                    <div class="card-header">
+                        <div class="date-badge"><span>${item.rDate}</span> <small style="margin-left:5px;">${item.startTime}</small></div>
+                        <div style="font-size: 12px; color: #06c755;">預約有效</div>
                     </div>
-                `;
-                container.innerHTML += html;
-            });
+                    <div class="card-row"><span class="label">預約編號</span><span class="val">${item.rId}</span></div>
+                    <div class="card-row"><span class="label">寵物 ID</span><span class="val">${item.pId}</span></div>
+                </div>
+            `).join('');
         }
     </script>
 </body>
