@@ -18,6 +18,8 @@
         h3 { text-align: center; color: #d81b60; margin-bottom: 25px; font-size: 22px; }
         .form-group { margin-bottom: 20px; text-align: left; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; font-size: 14px; }
+        
+        /* 讓內容並排的容器 */
         .input-group { display: flex; gap: 10px; align-items: center; }
         
         .form-control, .form-select { 
@@ -29,12 +31,14 @@
 
         #r_date { background-color: #fff; cursor: pointer; } 
 
-        /* 統一 Select 的外觀 (包含箭頭) */
         .form-select {
             background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23d81b60%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat; background-position: right 12px top 50%; background-size: 12px auto; padding-right: 30px;
         }
         
+        /* 時間選擇器的冒號樣式 */
+        .time-separator { font-weight: bold; font-size: 20px; color: #d81b60; }
+
         .btn-small { height: 48px; white-space: nowrap; background-color: #ff9800; color: white; border: none; border-radius: 8px; padding: 0 15px; font-size: 14px; cursor: pointer; font-weight: bold; flex-shrink: 0; }
         .btn { width: 100%; padding: 14px; background-color: #d81b60; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; margin-top: 15px; }
         .btn:disabled { background-color: #ccc; cursor: not-allowed; }
@@ -71,9 +75,15 @@
         <div class="form-group">
             <label>預約時間 <span id="time-hint" style="font-weight:normal; font-size:0.95em; color:#d81b60;"></span></label>
             
-            <select id="r_time" class="form-select">
-                <option value="">讀取中...</option>
-            </select>
+            <div class="input-group">
+                <select id="r_hour" class="form-select">
+                    <option value="">時</option>
+                </select>
+                <span class="time-separator">:</span>
+                <select id="r_min" class="form-select">
+                    <option value="">分</option>
+                </select>
+            </div>
 
         </div>
         
@@ -127,41 +137,35 @@
                     // 1. 初始化日期 (Flatpickr)
                     initDatePicker();
 
-                    // 2. 🚀 初始化時間 (產生 10 分鐘間隔的下拉選單)
-                    generateTimeSlots(g_openTime, g_closeTime);
+                    // 2. 🚀 初始化時間 (拆分 時/分 選單)
+                    initSplitTimePicker(g_openTime, g_closeTime);
                 }
             });
         }
 
-        // 🚀 新增：產生時間選單邏輯
-        function generateTimeSlots(startStr, endStr) {
-            const select = document.getElementById('r_time');
-            select.innerHTML = '<option value="">請選擇時間</option>';
+        // 🚀 新增：初始化「時」「分」選單
+        function initSplitTimePicker(startStr, endStr) {
+            const hourSelect = document.getElementById('r_hour');
+            const minSelect = document.getElementById('r_min');
 
-            // 將 "09:30" 轉為 分鐘數 (例如 9*60+30 = 570)
-            const toMins = (str) => {
-                const [h, m] = str.split(':').map(Number);
-                return h * 60 + m;
-            };
+            // 1. 產生小時 (從營業開始到結束)
+            const startH = parseInt(startStr.split(':')[0], 10);
+            const endH = parseInt(endStr.split(':')[0], 10);
 
-            // 將 分鐘數 轉回 "09:30"
-            const toTimeStr = (mins) => {
-                const h = Math.floor(mins / 60).toString().padStart(2, '0');
-                const m = (mins % 60).toString().padStart(2, '0');
-                return `${h}:${m}`;
-            };
-
-            const startMins = toMins(startStr);
-            const endMins = toMins(endStr);
-
-            // 迴圈：從開始時間到結束時間，每次 +10 分鐘
-            for (let m = startMins; m <= endMins; m += 10) {
-                const timeLabel = toTimeStr(m);
-                select.add(new Option(timeLabel, timeLabel));
+            hourSelect.innerHTML = '<option value="">時</option>';
+            for (let h = startH; h <= endH; h++) {
+                const val = h.toString().padStart(2, '0');
+                hourSelect.add(new Option(val, val));
             }
+
+            // 2. 產生分鐘 (每 10 分鐘一跳)
+            minSelect.innerHTML = '<option value="">分</option>';
+            const minutes = ["00", "10", "20", "30", "40", "50"];
+            minutes.forEach(m => {
+                minSelect.add(new Option(m, m));
+            });
         }
 
-        // 僅保留日期選擇器，時間改用上述的 generateTimeSlots
         function initDatePicker() {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -190,27 +194,38 @@
             });
         }
 
+        // 🚀 修改：送出邏輯，將時與分組裝
         function submitReservation() {
             const petSelect = document.getElementById('pet_select');
             const beauticianSelect = document.getElementById('beautician_select');
             const dateInput = document.getElementById('r_date');
-            const timeSelect = document.getElementById('r_time'); // 這裡已經是 select 了
+            
+            // 取得 時 與 分
+            const hourSelect = document.getElementById('r_hour');
+            const minSelect = document.getElementById('r_min');
+
             const srvSelect = document.getElementById('r_service');
             const btn = document.getElementById('btn-submit');
 
             const p_id = petSelect.value;
             const b_id = beauticianSelect.value;
             const date = dateInput.value;
-            const time = timeSelect.value;
             const srvCode = srvSelect.value;
+
+            // 組合時間
+            let time = "";
+            if (hourSelect.value && minSelect.value) {
+                time = `${hourSelect.value}:${minSelect.value}`;
+            }
 
             let p_name = "";
             let s_name = "";
             if (petSelect.selectedIndex >= 0) p_name = petSelect.options[petSelect.selectedIndex].text;
             if (srvSelect.selectedIndex >= 0) s_name = srvSelect.options[srvSelect.selectedIndex].text;
 
+            // 驗證
             if (!p_id || !date || !time || !srvCode) { 
-                Swal.fire('請檢查', '請填寫完整預約資訊', 'error'); 
+                Swal.fire('請檢查', '請填寫完整預約資訊 (含時間)', 'error'); 
                 return; 
             }
 
