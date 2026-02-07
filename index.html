@@ -39,7 +39,8 @@
 
         h2 {
             color: var(--text-main);
-            margin: 20px 0 30px;
+            /* [修改] 將下方邊距從 30px 減少為 10px，拉近與下方卡片的距離 */
+            margin: 20px 0 10px; 
             text-align: center;
             font-size: 24px;
             font-weight: 700;
@@ -50,10 +51,8 @@
             gap: 5px;
         }
 
-        /* QR Code 區塊 - 已調整間距 */
         .qr-container {
             background: var(--card-bg);
-            /* [修改] 減少內距，讓整體更緊湊 (原 30px 20px) */
             padding: 20px; 
             border-radius: var(--radius);
             box-shadow: var(--shadow);
@@ -64,7 +63,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            /* [修改] 移除過大的最小高度，改為由內容撐開，避免留白過多 */
             min-height: auto; 
             position: relative;
             overflow: hidden;
@@ -83,7 +81,6 @@
         }
 
         #qrcode {
-            /* [修改] 減少 QR Code 上下的間距 (原 20px 0) */
             margin: 10px 0;
             padding: 10px;
             background: white;
@@ -99,16 +96,16 @@
             font-weight: 700;
             font-size: 20px;
             color: var(--text-main);
-            margin-bottom: 2px; /* 微調 */
+            margin-bottom: 2px;
         }
         
         .hint-text {
             font-size: 13px;
             color: var(--text-sub);
             background: #f8f9fa;
-            padding: 4px 12px; /* 微調高度 */
+            padding: 4px 12px;
             border-radius: 20px;
-            margin-top: 5px; /* [修改] 減少與 QR Code 的距離 */
+            margin-top: 5px;
         }
 
         /* Loading 動畫 */
@@ -120,7 +117,7 @@
             gap: 15px;
             color: var(--text-sub);
             font-size: 14px;
-            padding: 40px 0; /* loading 時給予足夠空間 */
+            padding: 40px 0;
         }
         .spinner {
             width: 40px;
