@@ -29,6 +29,12 @@
         .flatpickr-day.selected { background: #d81b60; }
         .flatpickr-day.today:hover { background: #fce4ec; color: #d81b60; }
 
+        /* --- 新增：隱藏非當月的日期 (上個月/下個月的灰色日期) --- */
+        .flatpickr-day.prevMonthDay, 
+        .flatpickr-day.nextMonthDay {
+            visibility: hidden; /* 使用 visibility 隱藏但保留佔位，避免版面跑掉 */
+        }
+
         /* Modal 樣式 (時間選擇器) */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease; }
         .modal-overlay.show { opacity: 1; }
@@ -304,5 +310,3 @@
     </script>
 </body>
 </html>
-
-
