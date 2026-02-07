@@ -14,15 +14,19 @@
         .booking-card { background: white; border-radius: 15px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-left: 6px solid var(--primary-color); }
         .card-header { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; }
         .date-badge { font-weight: 700; color: var(--primary-color); font-size: 16px; }
+        .info-row { font-size: 14px; margin: 5px 0; color: #2f3542; display: flex; justify-content: space-between; }
+        .label { color: #a4b0be; }
+        .val { font-weight: 500; }
         .cancel-btn { width: 100%; border: none; padding: 10px; border-radius: 8px; font-weight: bold; margin-top: 10px; cursor: pointer; transition: 0.3s; background: #ee5253; color: white; }
         .btn-disabled { background: #ced6e0; color: white; cursor: not-allowed; }
         .notice { font-size: 12px; color: #eb4d4b; text-align: center; margin-top: 8px; font-weight: bold; }
-        #loading { text-align: center; color: #747d8c; margin-top: 50px; display: none; }
+        #loading, #no-data { text-align: center; color: #747d8c; margin-top: 50px; display: none; }
     </style>
 </head>
 <body>
     <h2 style="color: #2f3542;">📅 我的預約紀錄</h2>
-    <div id="loading">讀取中...</div>
+    <div id="loading">讀取資料中...</div>
+    <div id="no-data">目前沒有符合條件的預約</div>
     <div class="list-container" id="list-area"></div>
 
     <script>
@@ -42,15 +46,15 @@
             fetch(`${GAS_URL}?action=get_booking_history&u_id=${userId}`)
                 .then(res => res.json()).then(res => {
                     document.getElementById('loading').style.display = 'none';
-                    render(res.data);
+                    if (res.status === 'success' && res.data.length > 0) { render(res.data); } 
+                    else { document.getElementById('no-data').style.display = 'block'; }
                 });
         }
 
-        // ⭐ 使用 SweetAlert2 取代原生 confirm/alert
         function cancelBooking(rId) {
             Swal.fire({
                 title: '確定取消？',
-                text: "取消後將無法恢復此預約！",
+                text: "預約單號：" + rId,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ee5253',
@@ -63,9 +67,9 @@
                     fetch(`${GAS_URL}?action=cancel_booking&r_id=${rId}`)
                         .then(res => res.json()).then(res => {
                             if (res.status === 'success') {
-                                Swal.fire('已取消', '您的預約已成功取消。', 'success').then(() => location.reload());
+                                Swal.fire('已取消', res.message, 'success').then(() => location.reload());
                             } else {
-                                Swal.fire('失敗', '取消發生錯誤', 'error');
+                                Swal.fire('錯誤', res.message, 'error');
                             }
                         });
                 }
@@ -82,7 +86,9 @@
                         <div class="date-badge">${item.rDate} <small style="color:#747d8c">${item.startTime}</small></div>
                         <div style="font-size:11px; font-weight:bold; color:${isConfirmed?'#1976d2':'#f57c00'}">${isConfirmed?'店家已確認':'待確認'}</div>
                     </div>
-                    <div style="font-size:14px; margin:5px 0;">寵物名稱：<span style="color:#e67e22; font-weight:700;">${item.pName}</span></div>
+                    <div class="info-row"><span class="label">預約單號</span><span class="val">${item.rId}</span></div>
+                    <div class="info-row"><span class="label">寵物名稱</span><span class="val" style="color:#e67e22; font-weight:700;">${item.pName}</span></div>
+                    
                     <button class="cancel-btn ${isConfirmed ? 'btn-disabled' : ''}" 
                             ${isConfirmed ? 'disabled' : ''} 
                             onclick="cancelBooking('${item.rId}')">取消預約</button>
