@@ -21,7 +21,6 @@
             -webkit-appearance: none; appearance: none; min-height: 44px;
         }
 
-        /* 🚀 新增：唯讀欄位的樣式 */
         .readonly-input {
             background-color: #eeeeee !important;
             color: #666;
@@ -59,6 +58,41 @@
         
         #loading { text-align: center; margin-top: 50px; font-size: 18px; color: #666; }
         #form-area { display: none; }
+
+        /* --- 自定義彈窗樣式 --- */
+        .custom-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            width: 80%;
+            max-width: 300px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .modal-content p {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .modal-btn {
+            background-color: #06c755;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -112,6 +146,13 @@
         </div>
 
         <button id="btn-save" class="btn" onclick="saveData()">存檔</button>
+    </div>
+
+    <div id="myModal" class="custom-modal">
+        <div class="modal-content">
+            <p id="modal-message">訊息內容</p>
+            <button class="modal-btn" onclick="closeAndExit()">確定</button>
+        </div>
     </div>
 
     <script>
@@ -173,7 +214,7 @@
                         checkUserStatus(currentUserId, profile.displayName);
                     });
                 }
-            }).catch(err => { alert('LIFF 初始化失敗: ' + err); });
+            }).catch(err => { console.error('LIFF 初始化失敗', err); });
         }
 
         function checkUserStatus(userId, defaultName) {
@@ -193,11 +234,13 @@
                     
                     parseAndSetAddress(data.addr);
                 } else {
-                    // 若為新用戶，自動填入 LIFF 抓到的名字
                     document.getElementById('u_name').value = defaultName;
                     document.getElementById('u_marketing').checked = true; 
                 }
-            }).catch(err => { document.getElementById('loading').innerText = '讀取失敗'; alert('連線錯誤: ' + err); });
+            }).catch(err => { 
+                document.getElementById('loading').innerText = '讀取失敗'; 
+                console.error('連線錯誤', err); 
+            });
         }
 
         function parseAndSetAddress(fullAddr) {
@@ -249,19 +292,19 @@
             const marketing = document.getElementById('u_marketing').checked ? 1 : 0;
 
             if(!name) { 
-                alert('客戶名稱讀取失敗，請重新開啟頁面'); 
+                showCustomAlert('客戶名稱讀取失敗，請重新開啟頁面'); 
                 return; 
             }
             if(!phone) { 
-                alert('請輸入電話 (必填)'); 
+                showCustomAlert('請輸入電話 (必填)'); 
                 return; 
             }
             if(!city || city === "") { 
-                alert('請選擇縣市'); 
+                showCustomAlert('請選擇縣市'); 
                 return; 
             }
             if(!dist || dist === "") { 
-                alert('請選擇區域'); 
+                showCustomAlert('請選擇區域'); 
                 return; 
             }
 
@@ -282,21 +325,33 @@
             .then(res => res.json())
             .then(result => {
                 if (result.status === 'success') {
-                    alert(result.message);
-                    liff.closeWindow();
+                    showCustomAlert(result.message);
                 } else {
-                    alert('存檔失敗: ' + result.message);
+                    showCustomAlert('存檔失敗: ' + result.message);
                     btn.disabled = false;
                     btn.innerText = '存檔';
                 }
             })
             .catch(err => {
-                alert('存檔發生錯誤: ' + err);
+                showCustomAlert('存檔發生錯誤: ' + err);
                 btn.disabled = false;
                 btn.innerText = '存檔';
             });
         }
+
+        /* --- 彈窗控制函式 --- */
+        function showCustomAlert(msg) {
+            document.getElementById('modal-message').innerText = msg;
+            document.getElementById('myModal').style.display = 'flex';
+        }
+
+        function closeAndExit() {
+            document.getElementById('myModal').style.display = 'none';
+            // 若存檔成功則關閉視窗，若只是普通警告則可不關閉（視需求調整）
+            if (document.getElementById('modal-message').innerText === '會員資料已更新') {
+                liff.closeWindow();
+            }
+        }
     </script>
 </body>
 </html>
-
