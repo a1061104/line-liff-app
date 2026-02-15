@@ -142,17 +142,18 @@
                 const isConfirmed = item.rConfirm == "1";
                 return `
                 <div class="booking-card">
-                    <div class="card-header" onclick="showQRCode('${item.rId}')" title="點擊顯示 QR Code">
+                    <div class="card-header" onclick="showQRCode('${item.rId}')" title="點擊顯示 QR Code" style="cursor: pointer;">
                         <div class="date-badge">
                             ${item.rDate} <small style="color:#747d8c; margin-left: 5px;">${item.startTime}</small>
                             
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7f8c8d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 8px; vertical-align: sub;">
-                                <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
-                                <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
-                                <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
-                                <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
-                                <rect x="9" y="9" width="6" height="6" rx="1"></rect>
-                                <path d="M15 9h-6v6h6z"></path>
+                                <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                                <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                                <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                                <path d="M14 14h2v2h-2z"></path>
+                                <path d="M19 14h2v2h-2z"></path>
+                                <path d="M14 19h2v2h-2z"></path>
+                                <path d="M19 19h2v2h-2z"></path>
                             </svg>
                             </div>
                         <div style="font-size:11px; font-weight:bold; color:${isConfirmed?'#1976d2':'#f57c00'}">${isConfirmed?'店家已確認':'待確認'}</div>
@@ -170,3 +171,4 @@
     </script>
 </body>
 </html>
+
