@@ -13,9 +13,11 @@
         body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg-color); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
         .list-container { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 12px; }
         .booking-card { background: white; border-radius: 15px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-left: 6px solid var(--primary-color); }
-        /* ⭐ 修改: 增加 cursor pointer 提示可點擊，並增加點擊效果 */
+        
+        /* 增加 cursor pointer 提示可點擊，並增加點擊效果 */
         .card-header { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; border-radius: 5px;}
         .card-header:active { background: #f1f2f6; }
+        
         .date-badge { font-weight: 700; color: var(--primary-color); font-size: 16px; display: flex; align-items: center; gap: 5px;}
         .info-row { font-size: 14px; margin: 5px 0; color: #2f3542; display: flex; justify-content: space-between; }
         .label { color: #a4b0be; }
@@ -25,7 +27,7 @@
         .notice { font-size: 12px; color: #eb4d4b; text-align: center; margin-top: 8px; font-weight: bold; }
         #loading, #no-data { text-align: center; color: #747d8c; margin-top: 50px; display: none; }
 
-        /* ⭐ 新增: QR Code Modal 相關樣式 */
+        /* QR Code Modal 相關樣式 */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 25px; border-radius: 15px; text-align: center; position: relative; width: 80%; max-width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .modal-close { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #aaa; }
@@ -53,7 +55,6 @@
         const LIFF_ID = '2008965576-txfwY86y';
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbxzciNP_1cdq9XBnfcgTj5gv_QEt2xk-cevUsocHJx5j4IxjhJvS9DHHz1hhPXzDQHl/exec';
 		let userId = "";
-        // ⭐ 新增: 全域變數存放 QR Code 物件
         let qrcodeObj = null;
 
         window.onload = () => {
@@ -63,7 +64,6 @@
                  else { liff.getProfile().then(p => { userId = p.userId; fetchData(); }); }
             }).catch(err => {
                 console.error('LIFF Initialization failed', err);
-                // 用於本地測試，若無 LIFF 環境可解開下方註解模擬
                 // userId = "DummyUser123"; fetchData(); 
             });
         };
@@ -82,7 +82,6 @@
         }
 
         function cancelBooking(rId) {
-            // (此函式保持不變)
             Swal.fire({
                 title: '確定取消？',
                 text: "預約單號：" + rId,
@@ -107,7 +106,7 @@
             });
         }
 
-        // ⭐ 新增: 顯示 QR Code 視窗的函式
+        // 顯示 QR Code 視窗的函式
         function showQRCode(rId) {
             const modal = document.getElementById('qrModal');
             const container = document.getElementById('qrcode-container');
@@ -126,13 +125,12 @@
                 correctLevel : QRCode.CorrectLevel.H
             });
             
-            // 顯示模態視窗 (使用 flex 以便置中)
+            // 顯示模態視窗
             modal.style.display = 'flex';
         }
 
-        // ⭐ 新增: 關閉 QR Code 視窗的函式
+        // 關閉 QR Code 視窗的函式
         function closeModal(event, forceClose = false) {
-            // 如果是點擊背景遮罩 (modal-overlay) 或是強制關閉按鈕才執行隱藏
             if (event.target.classList.contains('modal-overlay') || forceClose) {
                 document.getElementById('qrModal').style.display = 'none';
             }
@@ -142,14 +140,21 @@
             const area = document.getElementById('list-area');
             area.innerHTML = data.map(item => {
                 const isConfirmed = item.rConfirm == "1";
-                // ⭐ 修改: 在 card-header 加上 onclick 事件，並加入一個小圖示提示可點擊
                 return `
                 <div class="booking-card">
                     <div class="card-header" onclick="showQRCode('${item.rId}')" title="點擊顯示 QR Code">
                         <div class="date-badge">
                             ${item.rDate} <small style="color:#747d8c; margin-left: 5px;">${item.startTime}</small>
-                            <span style="font-size: 14px; margin-left: 8px; color: #7f8c8d;">🔍</span>
-                        </div>
+                            
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7f8c8d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 8px; vertical-align: sub;">
+                                <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                                <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                                <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                                <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                                <rect x="9" y="9" width="6" height="6" rx="1"></rect>
+                                <path d="M15 9h-6v6h6z"></path>
+                            </svg>
+                            </div>
                         <div style="font-size:11px; font-weight:bold; color:${isConfirmed?'#1976d2':'#f57c00'}">${isConfirmed?'店家已確認':'待確認'}</div>
                     </div>
                     <div class="info-row"><span class="label">預約單號</span><span class="val">${item.rId}</span></div>
