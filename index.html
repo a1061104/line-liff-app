@@ -6,275 +6,325 @@
     <title>會員中心</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
         :root {
-            --primary-color: #06c755;
-            --secondary-color: #ff9f43;
-            --booking-color: #2e86de; /* 新增：預約功能的主色 */
-            --bg-color: #f0f2f5;
-            --card-bg: #ffffff;
-            --text-main: #333333;
-            --text-sub: #888888;
-            --shadow: 0 8px 20px rgba(0,0,0,0.06);
-            --radius: 24px;
+            --primary: #06c755;      /* LINE 綠 */
+            --accent-pet: #ff9f43;   /* 寵物 橘 */
+            --accent-book: #2e86de;  /* 預約 藍 */
+            --bg-color: #f4f6f9;
+            --surface: #ffffff;
+            --text-dark: #2d3436;
+            --text-grey: #636e72;
+            --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+            --radius-box: 20px;
+            --radius-btn: 16px;
         }
 
         body {
-            font-family: 'Noto Sans TC', -apple-system, sans-serif;
+            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--bg-color);
-            background-image: linear-gradient(180deg, #e3ffe7 0%, var(--bg-color) 40%);
-            background-repeat: no-repeat;
-            min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 24px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
             box-sizing: border-box;
+            color: var(--text-dark);
             -webkit-tap-highlight-color: transparent;
         }
 
-        h2 {
-            color: var(--text-main);
-            margin: 0 0 10px; 
-            text-align: center;
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
+        /* 標題區域 */
+        header {
+            width: 100%;
+            max-width: 360px;
+            margin-bottom: 20px;
+            text-align: left;
         }
 
-        /* QR Code 區塊 */
-        .qr-container {
-            background: var(--card-bg);
-            padding: 20px; 
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            margin-bottom: 20px; 
+        h2 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-grey);
+            margin-top: 4px;
+        }
+
+        /* QR Code 卡片 */
+        .qr-card {
+            background: var(--surface);
             width: 100%;
-            max-width: 320px; 
+            max-width: 360px;
+            border-radius: var(--radius-box);
+            box-shadow: var(--shadow-md);
+            padding: 24px;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: auto; 
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.8);
-            transition: transform 0.3s ease;
+            margin-bottom: 30px;
+            min-height: 220px; /* 固定最小高度避免讀取時跳動 */
         }
 
-        .qr-container::after {
+        /* 頂部裝飾條 */
+        .qr-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             height: 6px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(90deg, var(--primary), #55efc4);
         }
 
+        /* QR Code 容器 */
         #qrcode {
-            margin: 10px 0 5px 0; 
+            margin: 15px 0;
             padding: 10px;
             background: white;
+            border: 1px solid #eee;
             border-radius: 12px;
-            box-shadow: inset 0 0 0 1px #eee; 
         }
-
+        
         #qrcode img {
-            display: block; 
-        }
-        
-        .user-name-title {
-            font-weight: 700;
-            font-size: 20px;
-            color: var(--text-main);
-            margin-bottom: 2px;
-        }
-        
-        .hint-text {
-            font-size: 13px;
-            color: var(--text-sub);
-            background: #f8f9fa;
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-top: 0; 
+            display: block;
         }
 
-        /* Loading 動畫 */
+        .user-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .hint-badge {
+            font-size: 12px;
+            color: var(--text-grey);
+            background: #f1f2f6;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        /* Loading 動畫優化 */
         #loading-msg {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 15px;
-            color: var(--text-sub);
+            gap: 12px;
+            color: var(--text-grey);
             font-size: 14px;
-            padding: 40px 0;
+            width: 100%;
+            height: 100%;
         }
+        
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary-color);
+            width: 36px;
+            height: 36px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s ease-in-out infinite;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .error-text { 
-            color: #ff4757 !important; 
-            font-weight: bold; 
+        .error-text {
+            color: #ff6b6b;
+            background: #fff5f5;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 13px;
             text-align: center;
-            padding: 20px;
-            background: #fff1f2;
-            border-radius: 12px;
         }
 
         /* 選單容器 */
-        .menu-container {
+        .menu-list {
             width: 100%;
-            max-width: 320px;
-            display: grid;
-            grid-template-columns: 1fr;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
             gap: 16px;
         }
 
-        /* 按鈕通用樣式 */
+        /* 按鈕樣式 */
         .menu-btn {
-            background-color: var(--card-bg);
-            border: none;
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            cursor: pointer;
             display: flex;
             align-items: center;
+            background: var(--surface);
+            padding: 18px;
+            border-radius: var(--radius-btn);
             text-decoration: none;
-            color: var(--text-main);
-            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.1s, box-shadow 0.2s;
             position: relative;
-            overflow: hidden;
         }
 
         .menu-btn:active {
-            transform: scale(0.96);
-            background-color: #fafafa;
+            transform: scale(0.98);
+            box-shadow: none;
+            background-color: #f8f9fa;
         }
 
-        .icon-box {
-            width: 56px;
-            height: 56px;
-            border-radius: 18px;
+        .icon-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
             margin-right: 16px;
             flex-shrink: 0;
         }
 
-        /* 各別按鈕配色 */
-        .btn-customer .icon-box {
-            background-color: #e3f9ea;
-            color: #06c755;
+        .icon-wrap svg {
+            width: 24px;
+            height: 24px;
+            stroke-width: 2;
         }
-        
-        .btn-pet .icon-box {
+
+        /* 按鈕個別配色 */
+        .btn-customer .icon-wrap {
+            background-color: #e6fffa;
+            color: #00b894; /* 青綠色 */
+        }
+
+        .btn-pet .icon-wrap {
             background-color: #fff4e6;
-            color: #ff9f43;
+            color: var(--accent-pet);
         }
 
-        .btn-booking .icon-box {
-            background-color: #e7f5ff; /* 淺藍背景 */
-            color: #2e86de; /* 深藍圖示 */
+        .btn-booking .icon-wrap {
+            background-color: #e7f5ff;
+            color: var(--accent-book);
         }
 
-        .menu-btn::after {
-            content: '›';
-            font-size: 24px;
-            color: #ddd;
-            margin-left: auto;
-            font-weight: 300;
-        }
-
-        .text-content {
+        .text-group {
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            justify-content: center;
+            gap: 3px;
         }
 
-        .title {
+        .btn-title {
             font-size: 16px;
             font-weight: 700;
-            color: var(--text-main);
+            color: var(--text-dark);
         }
 
-        .desc {
-            font-size: 13px;
-            color: var(--text-sub);
+        .btn-desc {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+
+        .arrow {
+            color: #dfe6e9;
         }
 
         footer {
             margin-top: auto;
-            color: #ccc;
-            font-size: 12px;
             padding-top: 40px;
-            padding-bottom: 10px;
+            color: #b2bec3;
+            font-size: 12px;
             text-align: center;
-            font-weight: 300;
         }
     </style>
 </head>
 <body>
 
-    <h2>會員中心</h2>
+    <header>
+        <h2>會員中心</h2>
+        <div class="subtitle">歡迎回來，管理您的寵物與預約</div>
+    </header>
 
-    <div class="qr-container">
+    <div class="qr-card">
         <div id="loading-msg">
             <div class="spinner"></div>
             <div>讀取會員資料中...</div>
         </div>
 
-        <div id="user-info" style="display:none;">
-            <div class="user-name-title" id="display-name"></div>
+        <div id="user-info" style="display:none; flex-direction: column; align-items: center;">
+            <div class="user-name" id="display-name"></div>
             <div id="qrcode"></div>
-            <div class="hint-text">請出示此碼以進行報到</div>
+            <div class="hint-badge">請出示此碼以進行報到</div>
         </div>
     </div>
 
-    <div class="menu-container">
+    <div class="menu-list">
+        
         <a href="Customer.html" class="menu-btn btn-customer">
-            <div class="icon-box">🙍‍♂️</div>
-            <div class="text-content">
-                <span class="title">客戶資料維護</span>
-                <span class="desc">查詢或修改會員資料</span>
+            <div class="icon-wrap">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </div>
+            <div class="text-group">
+                <span class="btn-title">客戶資料維護</span>
+                <span class="btn-desc">查詢或修改會員基本資料</span>
+            </div>
+            <div class="arrow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </div>
         </a>
 
         <a href="Pet.html" class="menu-btn btn-pet">
-            <div class="icon-box">🐕</div>
-            <div class="text-content">
-                <span class="title">毛小孩資料維護</span>
-                <span class="desc">建立或修改毛小孩資料</span>
+            <div class="icon-wrap">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2c.7 0 1.4.1 2 .4 2.8 1.4 3 4.2 2 6-1.5 2.8-5 2.2-6 0-1.2-2.5 0-5.2 2-6.4z"></path>
+                    <path d="M6.2 8.6c.5-.3 1.2-.5 1.8-.4 1.7.3 2.7 2.2 2 4-.8 1.8-3.3 2.3-4.8.8-.9-.9-.6-3.2 1-4.4z"></path>
+                    <path d="M17.8 8.6c-.5-.3-1.2-.5-1.8-.4-1.7.3-2.7 2.2-2 4 .8 1.8 3.3 2.3 4.8.8.9-.9.6-3.2-1-4.4z"></path>
+                    <path d="M8.2 15.6c.8-.4 1.8-.4 2.6.2 1.3 1 1.3 2.6.4 3.5-1.4 1.4-3.5 1.4-4.2-.8-.4-1.2.1-2.4 1.2-2.9z"></path>
+                    <path d="M15.8 15.6c-.8-.4-1.8-.4-2.6.2-1.3 1-1.3 2.6-.4 3.5 1.4 1.4 3.5 1.4 4.2-.8.4-1.2-.1-2.4-1.2-2.9z"></path>
+                </svg>
+            </div>
+            <div class="text-group">
+                <span class="btn-title">毛小孩資料維護</span>
+                <span class="btn-desc">建立或修改寵物資料</span>
+            </div>
+            <div class="arrow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </div>
         </a>
 
         <a href="Booking_Query.html" class="menu-btn btn-booking">
-            <div class="icon-box">📅</div>
-            <div class="text-content">
-                <span class="title">預約紀錄查詢</span>
-                <span class="desc">查看歷史與即將到來的預約</span>
+            <div class="icon-wrap">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                    <path d="M8 14h.01"></path>
+                    <path d="M12 14h.01"></path>
+                    <path d="M16 14h.01"></path>
+                    <path d="M8 18h.01"></path>
+                    <path d="M12 18h.01"></path>
+                    <path d="M16 18h.01"></path>
+                </svg>
+            </div>
+            <div class="text-group">
+                <span class="btn-title">預約紀錄查詢</span>
+                <span class="btn-desc">查看歷史與即將到來的預約</span>
+            </div>
+            <div class="arrow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </div>
         </a>
+
     </div>
 
     <footer>&copy; 2026 OUT DOT寵物美容</footer>
@@ -325,14 +375,14 @@
 
         function showQrCode(userId, displayName) {
             document.getElementById('loading-msg').style.display = 'none';
-            document.getElementById('user-info').style.display = 'flex';
-            document.getElementById('user-info').style.flexDirection = 'column';
-            document.getElementById('user-info').style.alignItems = 'center';
-
+            const userInfo = document.getElementById('user-info');
+            userInfo.style.display = 'flex';
+            
             document.getElementById('display-name').innerText = displayName;
             
-            document.getElementById('qrcode').innerHTML = '';
-            new QRCode(document.getElementById("qrcode"), {
+            const qrDiv = document.getElementById("qrcode");
+            qrDiv.innerHTML = '';
+            new QRCode(qrDiv, {
                 text: userId,
                 width: 150,
                 height: 150,
